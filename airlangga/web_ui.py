@@ -44,6 +44,8 @@ Persistence:
   Telegram bot token entered in the UI; it is never returned by the API.
 - ``runs/ledger.db`` — run ledger; runs are read from it, new runs are
   executed by the Team Runtime in a background thread.
+- ``runs/blackboard.db`` — committed member reports; run detail reads
+  team output from here, so a run's answers survive a restart.
 """
 
 from __future__ import annotations
@@ -62,7 +64,7 @@ from urllib.parse import parse_qs, urlparse
 
 import yaml
 
-from .blackboard import Blackboard
+from .blackboard import Blackboard, entry_to_report
 from .budget import BudgetGovernor
 from .config import (
     AirlanggaConfig,
@@ -254,6 +256,11 @@ def _model_slug(provider: str, model: str, endpoint: str | None, auth_ref: str) 
     raw = f"{provider}-{model}-{endpoint or ''}-{auth_ref or ''}"
     slug = re.sub(r"[^a-z0-9]+", "-", raw.lower()).strip("-")
     return slug or "model"
+
+
+def _blackboard_entry_to_report(entry: dict[str, Any]) -> dict[str, Any]:
+    """Alias for ``blackboard.entry_to_report`` kept for readability."""
+    return entry_to_report(entry)
 
 
 class UIStore:
@@ -1043,30 +1050,60 @@ class UIStore:
         ledger_path = self.runs_dir / "ledger.db"
         out: list[dict] = []
         live = {r["run_id"]: r for r in self.runs.values()}
-        if ledger_path.exists():
-            store = Ledger(ledger_path)
-            try:
-                for run_id in store.run_ids():
-                    state = store.reconstruct(run_id)
-                    out.append({
-                        "run_id": run_id,
-                        "status": live.get(run_id, {}).get("status", "done"),
-                        "goal": next((e["payload"].get("goal", "") for e in store.events(run_id)
-                                      if e["type"] == "plan_created"), ""),
-                        "events": len(store.events(run_id)),
-                        "cost_by_actor": state["cost_by_actor"],
-                        "contracts": state["contracts"],
-                        "member_states": state["member_states"],
-                        "dissents": state["dissents"],
-                    })
-            finally:
-                store.close()
+        bb_path = self.runs_dir / "blackboard.db"
+        bb = Blackboard(bb_path) if bb_path.exists() else None
+        try:
+            if ledger_path.exists():
+                store = Ledger(ledger_path)
+                try:
+                    for run_id in store.run_ids():
+                        state = store.reconstruct(run_id)
+                        claim_count = (
+                            sum(len(entry_to_report(e)["claims"]) for e in bb.list_for_run(run_id))
+                            if bb is not None else 0
+                        )
+                        out.append({
+                            "run_id": run_id,
+                            "status": live.get(run_id, {}).get("status", "done"),
+                            "goal": next((e["payload"].get("goal", "") for e in store.events(run_id)
+                                          if e["type"] == "plan_created"), ""),
+                            "events": len(store.events(run_id)),
+                            "claims": claim_count,
+                            "cost_by_actor": state["cost_by_actor"],
+                            "contracts": state["contracts"],
+                            "member_states": state["member_states"],
+                            "dissents": state["dissents"],
+                        })
+                finally:
+                    store.close()
+        finally:
+            if bb is not None:
+                bb.close()
         for run_id, rec in live.items():
             if run_id not in {r["run_id"] for r in out}:
                 out.append({"run_id": run_id, "status": rec["status"], "goal": rec.get("goal", ""),
-                            "events": 0, "cost_by_actor": {}, "contracts": {},
+                            "events": 0,
+                            "claims": sum(r["claims"] for r in rec.get("reports", [])),
+                            "cost_by_actor": {}, "contracts": {},
                             "member_states": {}, "dissents": []})
         return sorted(out, key=lambda r: r["run_id"], reverse=True)
+
+    def run_reports(self, run_id: str) -> list[dict]:
+        """Committed member reports for a run, from the blackboard.
+
+        The blackboard is the durable home of team output: commit_report
+        stores the full Report model per member. The ledger alone only
+        records *that* a report was committed, never its text — which is
+        why run output used to be invisible everywhere.
+        """
+        bb_path = self.runs_dir / "blackboard.db"
+        if not bb_path.exists():
+            return []
+        bb = Blackboard(bb_path)
+        try:
+            return [_blackboard_entry_to_report(e) for e in bb.list_for_run(run_id)]
+        finally:
+            bb.close()
 
     def run_detail(self, run_id: str) -> dict:
         ledger_path = self.runs_dir / "ledger.db"
@@ -1082,6 +1119,7 @@ class UIStore:
                     "run_id": run_id,
                     "status": live["status"],
                     "events": [],
+                    "reports": [],
                     "cost_by_actor": {},
                     "contracts": {},
                     "member_states": {},
@@ -1091,23 +1129,32 @@ class UIStore:
                 }
             raise UIError(f"no runs recorded yet (no ledger at {ledger_path})")
         store = Ledger(ledger_path)
+        bb_path = self.runs_dir / "blackboard.db"
+        bb = Blackboard(bb_path) if bb_path.exists() else None
         try:
             events = store.events(run_id)
             if not events and run_id not in self.runs:
                 raise UIError(f"no such run: {run_id!r}")
             state = store.reconstruct(run_id)
+            reports = (
+                [_blackboard_entry_to_report(e) for e in bb.list_for_run(run_id)]
+                if bb is not None else []
+            )
             return {
                 "run_id": run_id,
                 "status": self.runs.get(run_id, {}).get("status", "done"),
                 "events": events,
+                "reports": reports,
                 "cost_by_actor": state["cost_by_actor"],
                 "contracts": state["contracts"],
                 "member_states": state["member_states"],
                 "dissents": state["dissents"],
-                "trace_text": render_trace(store, run_id) if events else "",
+                "trace_text": render_trace(store, run_id, blackboard=bb) if events else "",
                 "error": self.runs.get(run_id, {}).get("error"),
             }
         finally:
+            if bb is not None:
+                bb.close()
             store.close()
 
     def start_run(self, team: str, goal: str, mock: bool = True) -> str:

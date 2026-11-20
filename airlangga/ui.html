@@ -537,7 +537,7 @@ let S = null;            // full /api/state payload
 let selected = null;     // selected node id
 let connectMode = false, connectSource = null;
 let editingFile = null, fileDirtyFlag = false;
-let graphDirty = false, zoom = 1, runPoll = null, activeRunId = null, runDetailTab = "timeline";
+let graphDirty = false, zoom = 1, runPoll = null, activeRunId = null, runDetailTab = "outputs";
 let nodeH = {};          // measured node heights, for port geometry
 let edgeEls = {};        // edge id -> {path, hit, label}
 let nodeEls = {};        // node id -> div
@@ -2117,7 +2117,8 @@ window.showRun = async (runId, opts) => {
     const dissents = d.dissents || [];
     const contractList = Object.entries(d.contracts || {}).map(([id, c]) => ({ id, ...(c || {}) }));
     document.getElementById("runDetailCard").style.display = "";
-    const tabs = [["timeline", `Timeline (${d.events.length})`], ["cost", "Cost breakdown"],
+    const reports = d.reports || [];
+    const tabs = [["outputs", `Outputs (${reports.length})`], ["timeline", `Timeline (${d.events.length})`], ["cost", "Cost breakdown"],
                   ["dissents", `Dissents (${dissents.length})`], ["contracts", `Contracts (${contractList.length})`], ["trace", "Raw trace"]];
     let html = `<div class="kpis"><span>Run <b class="mono">${esc(d.run_id)}</b></span>
       <span><span class="pill ${d.status === "done" ? "ok" : d.status === "failed" ? "fail" : "run"}">${esc(d.status)}</span></span>
@@ -2134,7 +2135,10 @@ window.showRun = async (runId, opts) => {
     document.getElementById("btnCloseRun").onclick = () => { document.getElementById("runDetailCard").style.display = "none"; };
     document.querySelectorAll("[data-rtab]").forEach(b => b.addEventListener("click", () => { runDetailTab = b.dataset.rtab; showRun(runId); }));
     const body = document.getElementById("runDetailBody");
-    if (runDetailTab === "timeline") {
+    if (runDetailTab === "outputs") {
+      body.innerHTML = reports.length ? reports.map(r => `<div class="card" style="margin:8px 0"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(r.member_id)}</b><span class="pill ${r.verdict === "pass" ? "ok" : r.verdict === "fail" ? "fail" : ""}">${esc(r.verdict || "—")}</span>${r.status ? `<span class="pill">${esc(r.status)}</span>` : ""}<span style="flex:1"></span><span class="muted small">${esc(r.created_at || "")}</span></div>${r.title ? `<p class="muted small" style="margin:6px 0 0">${esc(r.title)}</p>` : ""}${(r.claims || []).length ? `<ul style="margin:8px 0 0;padding-left:18px">${r.claims.map(c => `<li style="white-space:pre-wrap">${esc(c.claim || "")}${c.confidence != null ? ` <span class="muted small">(confidence ${Number(c.confidence).toFixed(2)})</span>` : ""}${(c.evidence_refs || []).length ? ` <span class="muted small mono">[${c.evidence_refs.map(ref => esc(ref)).join(", ")}]</span>` : ""}</li>`).join("")}</ul>` : `<p class="muted small">No claims in this report.</p>`}${r.diff ? `<p class="muted small" style="margin:8px 0 0"><b>Diff:</b> <span class="mono">${esc(r.diff)}</span></p>` : ""}${(r.open_questions || []).length ? `<p class="muted small" style="margin:8px 0 0"><b>Open questions:</b></p><ul style="margin:4px 0 0;padding-left:18px">${r.open_questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : ""}</div>`).join("")
+        : `<div class="empty">No team output yet for this run — reports appear here as members finish.</div>`;
+    } else if (runDetailTab === "timeline") {
       body.innerHTML = d.events.length ? `<div class="table-wrap"><table><thead><tr><th class="num">#</th><th>Time (UTC)</th><th>Actor</th><th>Type</th><th>Summary</th></tr></thead><tbody>
         ${d.events.map(e => `<tr><td class="num">${e.seq}</td><td class="mono">${hhmmss(e.ts)}</td><td><span class="pill">${esc(e.actor)}</span></td>
         <td><span class="pill">${esc(human(e.type))}</span></td>

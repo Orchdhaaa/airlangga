@@ -297,9 +297,20 @@ def test_run_flow_mock_and_trace(open_server):
     assert "plan_created" in {e["type"] for e in detail["events"]}
     assert detail["cost_by_actor"], "cost per actor must be recorded"
     assert detail["trace_text"] and "Run " in detail["trace_text"]
+    # P0 regression: team output must be visible, not just counted.
+    # Each member report carries its claim text verbatim.
+    assert detail["reports"], "run detail must surface member reports"
+    assert len(detail["reports"]) == 3
+    for report in detail["reports"]:
+        assert report["member_id"] and report["claims"]
+        assert any("Mock" in c["claim"] for c in report["claims"]), report
+    assert "Outputs:" in detail["trace_text"]
+    assert "Mock researcher completed its assigned work" in detail["trace_text"]
     # Runs list includes it.
     status, body = _req(base, "/api/runs")
     assert any(r["run_id"] == run_id for r in json.loads(body)["runs"])
+    listed = [r for r in json.loads(body)["runs"] if r["run_id"] == run_id][0]
+    assert listed["claims"] == 3
     # Unknown team / empty goal are refused.
     status, _ = _req(base, "/api/runs", method="POST", body={"team": "nope", "goal": "x", "mock": True})
     assert status == 400
@@ -319,6 +330,7 @@ def test_run_detail_known_run_without_ledger(project):
     detail = store.run_detail("run-test123")
     assert detail["status"] == "running"
     assert detail["events"] == []
+    assert detail["reports"] == []
     # A failed-before-ledger run surfaces its error instead of a 400.
     store.runs["run-test123"]["status"] = "failed"
     store.runs["run-test123"]["error"] = "boom"
@@ -857,3 +869,73 @@ def test_graph_viewport_no_scrollbars_zoom_pan(server):
     # Toolbar zoom buttons still drive the same zoom state.
     assert 'id="btnZoomOut"' in text and 'id="btnZoomIn"' in text
     assert 'id="btnFit"' in text
+
+
+def test_run_reports_survive_restart_and_count_claims(project):
+    # P0 regression: reports live in runs/blackboard.db, so a fresh UIStore
+    # (simulated server restart with empty in-memory self.runs) must still
+    # return full claim content, evidence_refs, diff, open_questions, and
+    # accurate total claim counts across multi-claim reports.
+    from airlangga.blackboard import Blackboard
+    from airlangga.ledger import Ledger
+
+    runs_dir = project / "runs"
+    ledger = Ledger(runs_dir / "ledger.db")
+    ledger.append("run-persist", "plan_created", "main_brain", {"goal": "Verify persistence", "contracts": ["c1"]})
+    ledger.append("run-persist", "blackboard_committed", "lead", {"entry_id": 1, "member_id": "researcher"})
+    ledger.close()
+
+    board = Blackboard(runs_dir / "blackboard.db")
+    eid = board.propose(
+        "run-persist",
+        "research-01",
+        "fact",
+        "Report from researcher (c1)",
+        json.dumps({
+            "contract_id": "c1",
+            "member_id": "researcher",
+            "claims": [
+                {"claim": "First durable claim", "evidence_refs": ["artifact://a1"], "confidence": 0.9},
+                {"claim": "Second durable claim", "evidence_refs": [], "confidence": 0.75},
+            ],
+            "diff": "artifact://d1",
+            "open_questions": ["Is anything missing?"],
+            "cost": {"tokens": 50.0, "usd": 0.001, "tool_calls": 0.0},
+            "verdict_self": "pass",
+        }),
+        author="researcher",
+    )
+    board.commit(eid, by_role="lead")
+    board.close()
+
+    # Fresh UIStore simulates server restart (empty self.runs).
+    restarted = UIStore(project)
+    assert restarted.runs == {}
+    detail = restarted.run_detail("run-persist")
+    assert len(detail["reports"]) == 1
+    rep = detail["reports"][0]
+    assert rep["member_id"] == "researcher"
+    assert rep["verdict"] == "pass"
+    assert rep["diff"] == "artifact://d1"
+    assert rep["open_questions"] == ["Is anything missing?"]
+    assert [c["claim"] for c in rep["claims"]] == ["First durable claim", "Second durable claim"]
+    assert rep["claims"][0]["evidence_refs"] == ["artifact://a1"]
+    assert "First durable claim" in detail["trace_text"]
+
+    # list_runs reports total claim count (2), not entry count (1).
+    listed = next(r for r in restarted.list_runs() if r["run_id"] == "run-persist")
+    assert listed["claims"] == 2
+
+
+def test_run_detail_ui_renders_outputs_tab(server):
+    base, _ = server
+    status, body = _req(base, "/", token="test-token-123")
+    assert status == 200
+    text = body.decode("utf-8")
+    assert 'runDetailTab = "outputs"' in text
+    assert '["outputs", `Outputs (${reports.length})`]' in text
+    assert 'if (runDetailTab === "outputs")' in text
+    assert "c.claim" in text
+    assert "c.evidence_refs" in text
+    assert "r.open_questions" in text
+    assert "r.diff" in text

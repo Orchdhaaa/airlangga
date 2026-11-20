@@ -64,6 +64,13 @@ def _run_team(config: AirlanggaConfig, team_name: str, goal: str, run_dir: Path,
             f"  {report.member_id}: verdict={report.verdict_self} "
             f"claims={len(report.claims)} cost_usd=${report.cost.get('usd', 0.0):.4f}"
         )
+        for claim in report.claims:
+            refs = f" [evidence: {', '.join(claim.evidence_refs)}]" if claim.evidence_refs else ""
+            click.echo(f"    - {claim.claim} (confidence {claim.confidence:.2f}){refs}")
+        if report.diff:
+            click.echo(f"    diff: {report.diff}")
+        for question in report.open_questions:
+            click.echo(f"    ? {question}")
     click.echo(render_trace(ledger, run_id))
     state = ledger.reconstruct(run_id)
     total_usd = sum(c["usd"] for c in state["cost_by_actor"].values())
@@ -129,8 +136,14 @@ def demo(goal: str, run_dir: str) -> None:
 def trace(ledger: str, run_id: str) -> None:
     """Show the trace for a recorded run."""
     store = Ledger(ledger)
-    click.echo(render_trace(store, run_id))
-    store.close()
+    bb_path = Path(ledger).resolve().parent / "blackboard.db"
+    board = Blackboard(bb_path) if bb_path.exists() else None
+    try:
+        click.echo(render_trace(store, run_id, blackboard=board))
+    finally:
+        if board is not None:
+            board.close()
+        store.close()
 
 
 @cli.command()

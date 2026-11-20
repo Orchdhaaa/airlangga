@@ -29,6 +29,63 @@ def make_abstract(body: str, max_chars: int = 600) -> str:
     return text[:max_chars].rstrip() + " …"
 
 
+def entry_to_report(entry: dict[str, Any]) -> dict[str, Any]:
+    """Shape one blackboard entry into a structured member report dict.
+
+    ``TeamRuntime.commit_report`` stores the full ``Report`` model JSON in
+    ``entry["body"]``, so claim text, evidence refs, confidence, verdict,
+    diff, and open questions come back verbatim. Non-JSON entries fall back
+    to ``entry["evidence"]`` or ``entry["body"]`` so text is never hidden.
+    """
+    body_raw = entry.get("body") or ""
+    try:
+        data = json.loads(body_raw)
+    except (ValueError, TypeError):
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    raw_claims = data.get("claims") or []
+    claims = [
+        {
+            "claim": str(c.get("claim", "")),
+            "evidence_refs": [str(ref) for ref in (c.get("evidence_refs") or [])],
+            "confidence": c.get("confidence", 0.0),
+        }
+        for c in raw_claims
+        if isinstance(c, dict)
+    ]
+    if not claims and entry.get("evidence"):
+        claims = [
+            {
+                "claim": str(c),
+                "evidence_refs": [],
+                "confidence": entry.get("confidence", 0.0),
+            }
+            for c in entry["evidence"]
+        ]
+    elif not claims and isinstance(body_raw, str) and body_raw.strip() and not data:
+        claims = [
+            {
+                "claim": body_raw.strip(),
+                "evidence_refs": [],
+                "confidence": entry.get("confidence", 0.0),
+            }
+        ]
+    return {
+        "entry_id": entry["id"],
+        "contract_id": data.get("contract_id"),
+        "member_id": entry["author"],
+        "title": entry["title"],
+        "status": entry["status"],
+        "verdict": data.get("verdict_self"),
+        "claims": claims,
+        "diff": data.get("diff"),
+        "open_questions": [str(q) for q in (data.get("open_questions") or [])],
+        "cost": data.get("cost") or {},
+        "created_at": entry["created_at"],
+    }
+
+
 class Blackboard:
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
@@ -136,6 +193,31 @@ class Blackboard:
         if row is None:
             raise KeyError(f"no blackboard entry {entry_id}")
         return self._row_to_dict(row)
+
+    def count_by_run(self) -> dict[str, int]:
+        """Number of entries per run id (used for run-list claim counts)."""
+        rows = self._conn.execute(
+            "SELECT run_id, COUNT(*) FROM entries GROUP BY run_id"
+        ).fetchall()
+        return {run_id: n for run_id, n in rows}
+
+    def list_for_run(
+        self, run_id: str, status: str | None = None
+    ) -> list[dict[str, Any]]:
+        """All entries for one run, across teams, in commit order.
+
+        Used by run detail views and CLI trace: after a server restart the
+        in-memory run registry is gone, so the team is not known — but the
+        run id alone identifies its committed reports.
+        """
+        query = "SELECT * FROM entries WHERE run_id=?"
+        params: list[Any] = [run_id]
+        if status:
+            query += " AND status=?"
+            params.append(status)
+        query += " ORDER BY id"
+        rows = self._conn.execute(query, params).fetchall()
+        return [self._row_to_dict(r) for r in rows]
 
     def list_entries(
         self, run_id: str, team_id: str, status: str | None = None

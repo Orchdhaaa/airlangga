@@ -10,10 +10,13 @@ do not use a team for that type.
 
 from __future__ import annotations
 
+from .blackboard import Blackboard, entry_to_report
 from .ledger import Ledger
 
 
-def render_trace(ledger: Ledger, run_id: str) -> str:
+def render_trace(
+    ledger: Ledger, run_id: str, blackboard: Blackboard | None = None
+) -> str:
     events = ledger.events(run_id)
     state = ledger.reconstruct(run_id)
     lines: list[str] = [f"Run {run_id} — {len(events)} events", ""]
@@ -47,6 +50,27 @@ def render_trace(ledger: Ledger, run_id: str) -> str:
     lines.append(f"Member states: {state['member_states']}")
     if state["dissents"]:
         lines.append(f"Dissents: {len(state['dissents'])} recorded")
+    if blackboard is not None:
+        entries = blackboard.list_for_run(run_id)
+        if entries:
+            lines.append("")
+            lines.append("Outputs:")
+            for entry in entries:
+                rep = entry_to_report(entry)
+                verdict = f" verdict={rep['verdict']}" if rep.get("verdict") else ""
+                lines.append(
+                    f"  {rep['member_id']}:{verdict} ({len(rep['claims'])} claim(s))"
+                )
+                for claim in rep["claims"]:
+                    conf = claim.get("confidence")
+                    conf_str = f" (confidence {float(conf):.2f})" if conf is not None else ""
+                    refs = claim.get("evidence_refs") or []
+                    refs_str = f" [evidence: {', '.join(refs)}]" if refs else ""
+                    lines.append(f"    - {claim['claim']}{conf_str}{refs_str}")
+                if rep.get("diff"):
+                    lines.append(f"    diff: {rep['diff']}")
+                for question in rep.get("open_questions") or []:
+                    lines.append(f"    ? {question}")
     return "\n".join(lines)
 
 
