@@ -1,0 +1,14 @@
+# Skill: research (version 1) — Airlangga's own skill format.
+# A skill is a declarative record (name, description, instructions,
+# tools). Loading only parses and validates it; it never executes code.
+name: research
+description: "Research a topic on the web and return sourced claims."
+version: "1"
+author: Airlangga
+tools: [fetch_url, search_web, file_read]
+instructions: |
+  Research the assigned topic using fetch_url on known sources.
+  Every claim in your report must carry evidence_refs (URLs or
+  artifact:// refs) and a confidence from 0.0 to 1.0.
+  Do not invent sources. If a source cannot be fetched, say so in
+  open_questions instead of guessing.

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airlangga"
+version = "1.0.0"
+description = "Airlangga — a persistent, accountable Agentic Team runtime, built from scratch."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+    "PyYAML>=6.0",
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+airlangga = "airlangga.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["airlangga*"]

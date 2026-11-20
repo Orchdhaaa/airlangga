@@ -1,0 +1,15 @@
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.pyc
+.DS_Store
+.airlangga-secrets.json
+.airlangga-ui.json
+.pytest_cache/
+.ui-token
+.venv/
+__pycache__/
+airlangga.egg-info/
+runs/
+tmp/

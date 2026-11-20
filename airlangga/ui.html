@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Airlangga — Agentic Team Studio</title>
+<style>
+  /* Candi Obsidian & Lontar Studio — warm volcanic obsidian, ivory text,
+     antique gold reserved for the one primary action per screen.
+     Pure system font stacks only: zero webfonts, zero CDN, offline-safe. */
+  :root {
+    --bg:#0D0C0A; --canvas-bg:#090807; --surface:#161411; --surface-2:#1F1C17; --surface-3:#29251E;
+    --border:#2E2A22; --border-strong:#3D372C; --border-ctrl:#524B3E; --border-hover:#857A66;
+    --nav-bg:#12100D; --input-bg:#11100D; --btn-sec:#242019; --danger-border:#6E2D28;
+    --text:#F4EFE6; --muted:#B3AA9B; --subtle:#8C8375;
+    --gold:#D4AF37; --gold-hover:#E5C558; --gold-tint:rgba(212,175,55,.12);
+    --accent2:#D96B43; --info:#56B4C8; --ok:#4CC38A; --danger:#E55B50; --danger-text:#F2786D;
+    --font-display:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif;
+    --font-mono:ui-monospace,'SFMono-Regular',Menlo,Monaco,Consolas,'Liberation Mono',monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:var(--font-sans); font-size:14px; line-height:1.5; background:var(--bg); color:var(--text); }
+  body.auth-pending > header, body.auth-pending > nav, body.auth-pending > main { visibility:hidden; }
+  h1 { font-family:var(--font-display); font-size:20px; line-height:1.1; letter-spacing:-.02em; margin:0; }
+  h2 { font-size:16px; font-weight:700; line-height:1.25; letter-spacing:-.015em; margin:0 0 10px; }
+  h3 { font-size:13px; font-weight:700; line-height:1.3; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:16px 0 8px; }
+  a { color:var(--info); text-decoration:none; }
+  a:hover { color:var(--text); text-decoration:underline; }
+  code { font-family:var(--font-mono); font-size:12.5px; }
+  .mono, .num { font-family:var(--font-mono); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  .num { text-align:right; }
+  .muted { color:var(--muted); } .small { font-size:12px; }
+
+  header { display:flex; align-items:center; gap:10px; height:52px; padding:0 16px; background:var(--surface); border-bottom:1px solid var(--border); }
+  header h1 { color:var(--text); }
+  header h1 .gold-word { color:var(--gold); }
+  header .sub { color:var(--muted); font-size:12px; }
+  header .spacer { flex:1; }
+  .brand-mark { flex:0 0 auto; display:block; }
+  #tokenBadge { font-family:var(--font-mono); font-size:11px; padding:4px 8px; border:1px solid var(--border); border-radius:2px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+  nav { display:flex; gap:4px; padding:0 16px; background:#12100D; border-bottom:1px solid var(--border); overflow-x:auto; scrollbar-width:none; flex-wrap:nowrap; }
+  nav::-webkit-scrollbar { display:none; }
+  nav button { flex:0 0 auto; white-space:nowrap; min-height:44px; padding:10px 14px; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; color:var(--muted); font-weight:600; }
+  nav button:hover { color:var(--text); background:transparent; border-color:var(--border); }
+  nav button.active { color:var(--text); border-bottom-color:var(--gold); background:transparent; }
+  .count { font-family:var(--font-mono); font-size:11px; color:var(--subtle); margin-left:2px; }
+  nav button.active .count { color:var(--gold); }
+
+  main { padding:16px; }
+  .tab { display:none; } .tab.active { display:block; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:14px; margin-bottom:14px; }
+  .card.hero { border-left:3px solid var(--gold); }
+  .row { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap:12px; align-items:start; }
+  .row > * { min-width:0; }
+  .row > div > label { margin:0 0 4px; }
+  .row-inline { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .row-inline > :first-child { flex:1 1 200px; min-width:0; }
+  .row-inline .inline-actions { flex:0 0 auto; display:flex; gap:8px; }
+  .files-split { display:grid; grid-template-columns:280px minmax(0,1fr); gap:12px; align-items:start; }
+  .field { display:flex; flex-direction:column; min-width:0; }
+  .field label { margin:0 0 4px; }
+  .actions { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+
+  label { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:10px 0 4px; }
+  input, select, textarea { background:#11100D; color:var(--text); border:1px solid var(--border-ctrl);
+    border-radius:4px; padding:9px 11px; font-size:15px; font-family:var(--font-sans); }
+  .card input, .card select, .card textarea, #loginScreen input, .modal-card input, .modal-card select, .modal-card textarea { width:100%; }
+  textarea { font-family:var(--font-mono); font-size:13px; min-height:220px; }
+  input:focus, select:focus, textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.16); outline:none; }
+  input:hover, select:hover, textarea:hover { border-color:var(--border-hover); }
+  input:disabled, select:disabled, textarea:disabled { background:var(--surface); color:var(--subtle); border-color:var(--border); cursor:not-allowed; }
+  input.is-invalid, select.is-invalid, textarea.is-invalid { border-color:var(--danger); box-shadow:0 0 0 3px rgba(229,91,80,.16); }
+  .field-err { color:var(--danger-text); font-size:12px; margin-top:4px; }
+  input::placeholder, textarea::placeholder { color:var(--subtle); }
+  .toolbar select { width:auto; min-width:130px; }
+  .check { display:inline-flex; gap:6px; align-items:center; margin:4px 10px 4px 0; font-size:13px; }
+  .check input { width:auto; }
+
+  button { background:#242019; color:var(--text); border:1px solid var(--border-ctrl); border-radius:4px;
+    padding:8px 14px; cursor:pointer; font-size:14px; font-weight:600; min-height:36px; font-family:var(--font-sans); }
+  button:hover { background:#2E2920; border-color:var(--border-hover); }
+  button:active { transform:translateY(1px); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button.gold:disabled { pointer-events:none; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+  button.gold, button.btn-gold { background:var(--gold); color:#0D0C0A; border:1px solid var(--gold); font-weight:700; padding:9px 16px; }
+  button.gold:hover, button.btn-gold:hover { background:var(--gold-hover); border-color:var(--gold-hover); }
+  button.ghost { background:transparent; color:var(--muted); border:1px solid transparent; padding:7px 12px; }
+  button.ghost:hover { color:var(--text); background:rgba(244,239,230,.06); border-color:var(--border); }
+  button.danger { background:transparent; color:var(--danger-text); border:1px solid #6E2D28; font-weight:600; }
+  button.danger:hover { background:var(--danger); color:#0D0C0A; border-color:var(--danger); }
+  button.small { padding:5px 10px; font-size:12.5px; min-height:30px; }
+
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th, td { text-align:left; padding:10px; border-bottom:1px solid #26221B; vertical-align:top; }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); background:#1A1713; border-bottom:1px solid #3D372C; padding:9px 10px; white-space:nowrap; font-weight:600; }
+  tbody tr:hover { background:rgba(244,239,230,.03); }
+  tbody tr.selected-row { background:var(--gold-tint); }
+  tbody tr.clickable { cursor:pointer; }
+  .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .empty { color:var(--muted); padding:18px 4px; text-align:center; font-size:13px; }
+
+  .pill { display:inline-flex; align-items:center; gap:5px; padding:2px 7px; border-radius:2px; font-family:var(--font-mono);
+    font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.05em; background:var(--surface-2); border:1px solid #3D372C; color:var(--muted); white-space:nowrap; }
+  .pill.ok { color:var(--ok); border-color:rgba(76,195,138,.4); background:rgba(76,195,138,.1); }
+  .pill.run { color:var(--info); border-color:rgba(86,180,200,.4); background:rgba(86,180,200,.1); }
+  .pill.run .dot { width:6px; height:6px; border-radius:50%; background:var(--info); animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
+  .pill.fail { color:var(--danger-text); border-color:rgba(229,91,80,.4); background:rgba(229,91,80,.1); }
+  .pill.gold { color:var(--gold); border-color:rgba(212,175,55,.45); background:var(--gold-tint); }
+  .pill.warn { color:var(--accent2); border-color:rgba(217,107,67,.45); background:rgba(217,107,67,.12); }
+  .pill.ochre { color:var(--ochre); border-color:rgba(200,155,84,.45); background:rgba(200,155,84,.12); }
+  .tag { display:inline-block; padding:1px 6px; border-radius:2px; background:var(--surface-3); border:1px solid var(--border); color:var(--muted); font-family:var(--font-mono); font-size:11px; margin:1px 2px 1px 0; white-space:nowrap; }
+
+  /* ---------- graph ---------- */
+  #graphWrap { display:flex; gap:12px; align-items:flex-start; position:relative; }
+  #canvasViewport { flex:1; min-width:0; overflow:hidden; position:relative; border:1px solid var(--border); border-radius:4px; background:var(--canvas-bg);
+    height:62vh; min-height:420px; touch-action:none; overscroll-behavior:none; }
+  #canvas { position:relative; width:1600px; height:900px; transform-origin:0 0;
+    background-image:radial-gradient(#2A251D 1px, transparent 1px); background-size:20px 20px; }
+  #edges { position:absolute; left:0; top:0; width:1600px; height:900px; pointer-events:none; }
+  #edges .hit { pointer-events:stroke; cursor:pointer; }
+  .node { position:absolute; width:204px; background:var(--surface-2); border:1px solid var(--border-ctrl); border-left:3px solid var(--border-hover);
+    border-radius:6px; padding:8px 10px; cursor:grab; user-select:none; font-size:13px; touch-action:none; }
+  .node:hover { border-color:var(--border-hover); }
+  .node.selected { border-color:var(--gold); box-shadow:0 0 0 2px rgba(212,175,55,.3), 0 8px 20px rgba(0,0,0,.5); }
+  .node.connect-source { border-color:var(--info); border-style:dashed; }
+  .node .t { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .node .l { font-weight:700; word-break:break-word; }
+  .node .d { font-size:11px; color:var(--muted); word-break:break-word; }
+  .node .badge { position:absolute; top:6px; right:8px; font-family:var(--font-mono); font-size:9.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:1px 5px; border-radius:2px; }
+  .node .badge.gold { color:var(--gold); border:1px solid rgba(212,175,55,.45); background:var(--gold-tint); }
+  .node .badge.ochre { color:var(--ochre); border:1px solid rgba(200,155,84,.45); background:rgba(200,155,84,.12); }
+  #btnSaveGraph.dirty { box-shadow:0 0 0 2px var(--gold-hover); }
+  .node.connect-hover { border-color:var(--ok); box-shadow:0 0 0 2px rgba(76,195,138,.28); }
+  .node.main_brain { width:216px; background:#1C1810; border:1.5px solid var(--gold); border-left:4px solid var(--gold);
+    box-shadow:inset 0 0 0 3px #0D0C0A, inset 0 0 0 4px rgba(212,175,55,.35); }
+  .node.team { background:#1C1714; border-left-color:#D96B43; }
+  .node.member { background:#181A1C; border-left-color:#56B4C8; }
+  .node.model { width:208px; background:#151B18; border-left-color:#4CC38A; }
+  .node.model .d { font-family:var(--font-mono); }
+  .node.file, .node.folder { width:192px; background:#1B1813; border-left-color:#C89B54; border-radius:4px 14px 6px 6px; }
+  .node.folder { border:1px dashed #6B5736; background:#1A1712; }
+  .node.tool { width:152px; background:#1A1815; border:1px dashed var(--border-ctrl); border-left:3px solid #9E9587; }
+  .node.skill { width:156px; background:#1A1815; border:1px dashed #6E6557; border-left:3px solid #B3AA9B; }
+  .port { position:absolute; width:10px; height:10px; border-radius:50%; background:var(--surface); border:1.5px solid var(--border-hover); top:50%; margin-top:-5px; pointer-events:none; }
+  .port.in { left:-6px; } .port.out { right:-6px; pointer-events:auto; cursor:crosshair; }
+  .node.main_brain .port { border-color:var(--gold); } .node.team .port { border-color:#D96B43; }
+  .node.member .port { border-color:#56B4C8; } .node.model .port { border-color:#4CC38A; }
+  .node.file .port, .node.folder .port { border-color:#C89B54; } .node.tool .port, .node.skill .port { border-color:#9E9587; }
+  #sidePanel { width:300px; flex-shrink:0; padding:0; overflow:hidden; }
+  #nodeForm { padding:14px; }
+  .panel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px 10px 16px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; min-height:48px; }
+  .panel-head .ptitle { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sheet-grabber { display:none; }
+  #sheetScrim { display:none; }
+  .toolbar { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
+  .toolbar .vdiv { width:1px; align-self:stretch; background:var(--border); margin:0 4px; }
+  .toolbar .spacer { flex:1; }
+  .seg { display:inline-flex; border:1px solid var(--border-ctrl); border-radius:4px; overflow:hidden; }
+  .seg button { border:none; border-radius:0; min-height:34px; }
+  .seg button.seg-on { background:var(--gold); color:#0D0C0A; }
+  .seg button.seg-on:hover { background:var(--gold-hover); }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; align-items:center; font-family:var(--font-mono); font-size:11px; color:var(--muted); padding:8px 2px 0; }
+  .legend .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+  #connectBanner { display:none; background:var(--gold-tint); border:1px solid var(--gold); border-radius:4px; padding:8px 12px; margin-bottom:10px; font-size:13px; }
+  #connectBanner.show { display:block; }
+  .conn-row { display:flex; justify-content:space-between; gap:8px; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; }
+
+  pre.trace { background:#0E0C09; border:1px solid var(--border); border-radius:4px; padding:10px;
+    overflow:auto; max-height:420px; font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+  .subtabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin:12px 0; overflow-x:auto; }
+  .subtabs button { border:none; background:transparent; border-bottom:2px solid transparent; border-radius:0; color:var(--muted); padding:8px 12px; min-height:40px; }
+  .subtabs button:hover { background:transparent; color:var(--text); border-color:var(--border); }
+  .subtabs button.active { color:var(--text); border-bottom-color:var(--gold); background:transparent; }
+  .kpis { display:flex; gap:20px; flex-wrap:wrap; align-items:baseline; font-size:13px; color:var(--muted); }
+  .kpis b { font-family:var(--font-mono); font-size:16px; color:var(--text); font-variant-numeric:tabular-nums; }
+  .launchbar { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+  .launchbar .team-field { flex:0 0 180px; min-width:0; }
+  .launchbar .grow { flex:1; min-width:200px; }
+
+  .file-row { display:flex; justify-content:space-between; gap:8px; padding:8px 10px; border-radius:4px; cursor:pointer; min-height:36px; align-items:center; }
+  .file-row:hover { background:var(--surface-3); }
+  .file-row.active { background:var(--gold-tint); }
+  .file-row .fname { font-family:var(--font-mono); font-size:12.5px; word-break:break-all; color:var(--info); }
+  .file-row.active .fname { color:var(--text); }
+  .file-row.folder { cursor:default; color:var(--muted); }
+  .file-row.folder .fname { color:var(--muted); }
+
+  #status { position:fixed; bottom:16px; right:16px; z-index:40; background:var(--surface-2); border:1px solid var(--border-ctrl);
+    border-radius:4px; padding:10px 14px; font-size:13px; box-shadow:0 12px 32px rgba(0,0,0,.65); opacity:0; pointer-events:none;
+    transition:opacity .2s; max-width:min(480px, calc(100vw - 32px)); cursor:pointer; }
+  #status.show { opacity:1; pointer-events:auto; }
+  #status.err { border-color:var(--danger); color:var(--danger-text); }
+  #status.ok { border-color:var(--ok); color:var(--ok); }
+  #status.warn { border-color:var(--ochre); color:var(--ochre); }
+
+  #memberModal, #zipModal, #addNodeModal { position:fixed; inset:0; background:rgba(0,0,0,.62); z-index:45; display:none; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; }
+  #memberModal.open, #zipModal.open, #addNodeModal.open { display:flex; }
+  #addNodeModal { z-index:46; }
+  #addNodeModal .modal-card { max-width:440px; }
+  .add-list { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .add-opt { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; min-height:56px; padding:10px 12px;
+    background:var(--surface-2); border:1px solid var(--border-ctrl); border-left:3px solid var(--border-hover); border-radius:4px; text-align:left; }
+  .add-opt:hover { background:var(--surface-3); border-color:var(--border-hover); }
+  .add-opt .add-title { font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; width:100%; }
+  .add-opt .add-desc { font-size:12px; font-weight:400; color:var(--muted); line-height:1.35; }
+  .add-opt.t-team { border-left-color:#D96B43; }
+  .add-opt.t-member { border-left-color:#56B4C8; }
+  .add-opt.t-model { border-left-color:#4CC38A; }
+  .add-opt.t-file { border-left-color:#C89B54; }
+  .add-opt.t-tool { border-left-color:#9E9587; }
+  .add-opt.t-skill { border-left-color:#B3AA9B; }
+  .add-divider { font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--subtle); margin:12px 0 4px; }
+  .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .modal-head h2 { margin:0; }
+  #canvasZoomPill { position:absolute; right:12px; bottom:12px; z-index:12; display:none; gap:4px; }
+  #canvasZoomPill button { min-width:44px; min-height:44px; padding:6px 10px; background:var(--surface-2); }
+  #zipDropzone { border:1.5px dashed var(--border-ctrl); background:var(--input-bg); border-radius:4px; padding:24px 16px; text-align:center; cursor:pointer; }
+  #zipDropzone:hover, #zipDropzone.dragover { border-color:var(--gold); background:rgba(212,175,55,.06); }
+  #zipProgress { height:2px; background:var(--gold); width:0; transition:width .3s; margin-bottom:10px; }
+  .drawer-head { display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:16px; font-weight:700; padding:2px 0 10px; list-style:none; }
+  .drawer-head::-webkit-details-marker { display:none; }
+  .modal-card { background:var(--surface); border:1px solid var(--border-ctrl); border-radius:4px; padding:20px; width:100%; max-width:640px; }
+
+  #loginScreen { position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center; padding:16px;
+    background:radial-gradient(circle at 50% 0%, rgba(212,175,55,.09), transparent 55%), var(--bg); }
+  .loginCard { background:var(--surface); border:1px solid #3D372C; border-top:3px solid var(--gold); border-radius:4px;
+    padding:32px 28px; width:100%; max-width:400px; }
+  .loginCard h1 { font-size:30px; color:var(--text); margin:10px 0 2px; }
+  .loginCard .eyebrow { font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .loginError { color:var(--danger-text); font-size:13px; min-height:18px; }
+  .pw-wrap { position:relative; }
+  .pw-wrap input { padding-right:64px; }
+  .pw-wrap button { position:absolute; right:5px; top:50%; transform:translateY(-50%); min-height:28px; padding:4px 8px; font-size:12px; }
+  details summary { cursor:pointer; font-weight:600; padding:4px 0; }
+  details summary:hover { color:var(--gold); }
+
+  @media (min-width: 1024px) {
+    #tab-settings { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; align-items:start; }
+    #tab-settings .card { margin-bottom:0; }
+  }
+  @media (max-width: 820px) {
+    #graphWrap { flex-direction:column; }
+    #canvasViewport { height:58vh; min-height:360px; width:100%; }
+    #sheetScrim { display:block; position:fixed; inset:0; background:rgba(0,0,0,.58); z-index:34; opacity:0; pointer-events:none; transition:opacity 180ms ease; }
+    #sheetScrim.open { opacity:1; pointer-events:auto; }
+    #sidePanel { position:fixed; left:0; right:0; bottom:0; width:100%; max-height:74dvh; z-index:35;
+      transform:translateY(105%); transition:transform 200ms cubic-bezier(0.2,0.8,0.2,1); box-shadow:0 -8px 32px rgba(0,0,0,.72); margin:0; border:none; border-top:1px solid var(--border-ctrl); border-radius:12px 12px 0 0; display:flex; flex-direction:column; overflow:hidden; }
+    #sidePanel.open { transform:translateY(0); }
+    #sidePanel.sheet-tall { max-height:92dvh; }
+    .sheet-grabber { height:22px; display:flex; align-items:center; justify-content:center; flex-shrink:0; touch-action:none; cursor:grab; }
+    .sheet-grabber::after { content:""; width:36px; height:4px; border-radius:2px; background:var(--border-ctrl); }
+    #nodeForm { overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; flex:1 1 auto; min-height:0; padding:12px 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+    body.sheet-open { overflow:hidden; }
+    body.sheet-open #status { top:60px; bottom:auto; }
+    .files-split { grid-template-columns:1fr; }
+    header { padding:10px 12px; gap:8px; }
+    nav { padding:0 12px; }
+    main { padding:12px; }
+    #status { left:12px; right:12px; bottom:12px; }
+  }
+  @media (max-width: 640px) {
+    header .sub { display:none; }
+    #btnZoomOut, #btnZoomIn, #btnZoomLabel, #btnFit { display:none; }
+    .toolbar .vdiv { display:none; }
+    #canvasZoomPill { display:flex; }
+    #memberModal, #zipModal, #addNodeModal { align-items:flex-end; padding:0; }
+    #memberModal .modal-card, #zipModal .modal-card, #addNodeModal .modal-card { max-height:92dvh; border-radius:12px 12px 0 0; overflow-y:auto; padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px)); }
+    #tokenBadge { font-size:11px; padding:3px 6px; }
+    input, select, textarea { font-size:16px; }
+    input:not([type="checkbox"]):not([type="radio"]), select { min-height:44px; }
+    button, nav button, .file-row, .check { min-height:44px; }
+    .pw-wrap button { min-height:34px; }
+    .toolbar { padding:0; gap:6px; }
+    pre.trace { font-size:11.5px; line-height:1.45; max-height:60vh; }
+    .row { grid-template-columns:minmax(0, 1fr); gap:10px; }
+    .row .spacer-label { display:none; }
+    .launchbar { flex-direction:column; align-items:stretch; gap:10px; }
+    .launchbar .field, .launchbar .team-field, .launchbar .grow { flex:0 0 auto; width:100%; min-width:0; }
+    .launchbar #btnRun { width:100%; }
+    .stacked table, .stacked tbody, .stacked tr, .stacked td { display:block; width:100%; }
+    .stacked thead { display:none; }
+    .stacked tr { border-bottom:1px solid var(--border); padding:8px 0; }
+    .stacked td { border-bottom:none; padding:4px 0; display:flex; gap:8px; align-items:baseline; }
+    .stacked td::before { content:attr(data-label); flex:0 0 96px; font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+    .stacked td[data-label=""]::before { display:none; }
+  }
+</style>
+</head>
+<body class="auth-pending">
+<header>
+  <svg class="brand-mark" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L17 7 L14 7 L14 13 L17 13 L10 19 L3 13 L6 13 L6 7 L3 7 Z" fill="none" stroke="#D4AF37" stroke-width="1.5"/></svg>
+  <h1>Airlangga</h1>
+  <span class="sub">/ Studio</span>
+  <span class="spacer"></span>
+  <span id="tokenBadge">auth: checking…</span>
+  <button id="btnSignOut" class="ghost small" style="display:none">Sign out</button>
+</header>
+<nav id="tabs">
+  <button data-tab="graph" class="active">Graph</button>
+  <button data-tab="teams">Teams <span class="count" id="countTeams"></span></button>
+  <button data-tab="models">Models</button>
+  <button data-tab="files">Files <span class="count" id="countFiles"></span></button>
+  <button data-tab="runs">Runs <span class="count" id="countRuns"></span></button>
+  <button data-tab="settings">Settings</button>
+</nav>
+<main>
+  <div id="status" title="Click to dismiss" role="status" aria-live="polite"></div>
+
+  <section class="tab active" id="tab-graph">
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Graph mode">
+        <button id="btnModeSelect" class="seg-on">Select</button><button id="btnModeConnect">Connect</button>
+      </div>
+      <select id="edgeKind" title="Edge kind for new connections" style="display:none">
+        <option value="auto" selected>Auto (by node types)</option>
+        <option value="uses_model">uses model</option><option value="has_member">member</option>
+        <option value="assigns">assigns</option><option value="powers">powers</option>
+        <option value="has_charter">charter</option><option value="has_file">attaches file</option>
+        <option value="uses_tool">tool</option><option value="uses_skill">skill</option>
+        <option value="depends_on">depends on</option>
+      </select>
+      <span class="vdiv"></span>
+      <button id="btnAddNode" class="ghost">+ Add</button>
+      <span class="vdiv"></span>
+      <button id="btnZoomOut" class="ghost" title="Zoom out">−</button>
+      <button id="btnZoomLabel" class="ghost" title="Reset zoom to 100%">100%</button>
+      <button id="btnZoomIn" class="ghost" title="Zoom in">+</button>
+      <button id="btnFit" class="ghost" title="Fit the whole graph in view">Fit</button>
+      <span class="spacer"></span>
+      <span id="graphDirtyChip" class="pill ochre" style="display:none">Unsaved changes</span>
+      <button id="btnSaveGraph" class="gold">Save graph</button>
+    </div>
+    <div id="connectBanner">Connecting from <b id="connectFrom"></b> — click the target node. <button class="ghost small" id="btnCancelConnect">Cancel (Esc)</button></div>
+    <div id="sheetScrim"></div>
+    <div id="graphWrap">
+      <div id="canvasViewport"><div id="canvas"><svg id="edges"></svg><div id="graphEmptyCard" style="display:none; position:absolute; left:340px; top:96px; width:340px; background:var(--surface); border:1px solid var(--border-strong); border-left:3px solid var(--gold); border-radius:4px; padding:18px;"><h2>Build your first Agentic Team</h2><p class="muted small">Connect a Team to Main Brain, wire each member to a model and charter file (like superagent.md), then launch a run.</p><div class="actions"><button id="btnEmptyCreateTeam" class="gold">Create first team</button><button id="btnEmptyAddTeam" class="ghost">+ Add Team node</button></div></div></div></div>
+      <div id="canvasZoomPill"><button id="btnZoomOutM" title="Zoom out">−</button><button id="btnZoomLabelM" title="Reset zoom to 100%">100%</button><button id="btnZoomInM" title="Zoom in">+</button><button id="btnFitM" title="Fit the whole graph in view">Fit</button></div>
+      <div id="sidePanel" class="card"><div class="sheet-grabber" id="sheetGrabber"></div><div class="panel-head"><span class="pill gold" id="panelType">Node</span><span class="ptitle" id="panelTitle">Node</span><button class="ghost" id="btnClosePanel" aria-label="Close inspector">×</button></div><div id="nodeForm" class="muted small">Select a node to edit it.</div></div>
+    </div>
+    <div class="legend" id="graphLegend">
+      <span><span class="sw" style="background:#D4AF37"></span>Brain</span>
+      <span><span class="sw" style="background:#D96B43"></span>Team</span>
+      <span><span class="sw" style="background:#56B4C8"></span>Member</span>
+      <span><span class="sw" style="background:#4CC38A"></span>Model</span>
+      <span><span class="sw" style="background:#C89B54"></span>File</span>
+      <span><span class="sw" style="background:#9E9587"></span>Tool</span>
+      <span>Drag a node to move it · Drag empty space to pan · Scroll to zoom · Click a node to inspect</span>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-teams">
+    <div class="actions" style="margin:0 0 14px">
+      <h2 style="margin:0">Teams (<span id="teamCount">0</span>)</h2>
+      <span style="flex:1"></span>
+      <button id="btnNewTeam" class="gold">+ New team</button>
+    </div>
+    <div class="card" id="createTeamCard" style="display:none"><h2>New team</h2>
+      <div class="row">
+        <div><label>Name</label><input id="newTeamName" placeholder="research-02"></div>
+        <div><label>Template</label><select id="newTeamTemplate"><option>research</option><option>code-review</option><option>content</option><option>blank</option></select></div>
+        <div><label>Team brain mode</label><select id="newTeamMode"><option value="lead_member">lead member</option><option value="separate">separate</option></select></div>
+      </div>
+      <label>Goal</label><input id="newTeamGoal" placeholder="What should this team achieve?">
+      <div class="row"><div><label>Team budget (USD)</label><input id="newTeamBudget" type="number" step="0.5" min="0" value="15"></div>
+      <div><label class="spacer-label">&nbsp;</label><span class="check"><input type="checkbox" id="newTeamSeed" checked> Seed starter members from template</span></div></div>
+      <div class="actions"><button id="btnCreateTeam" class="gold">Create team</button><button id="btnCancelCreate" class="ghost">Cancel</button></div>
+    </div>
+    <div id="teamsList"></div>
+  </section>
+
+  <section class="tab" id="tab-models">
+    <div class="card hero"><h2>Main Brain</h2><div id="mainBrainForm"></div></div>
+    <div class="card"><h2>Member models</h2><div id="modelsTable"></div></div>
+    <div class="card"><details><summary>Provider reference (<span id="presetCount">0</span> presets)</summary><div id="presetsTable" class="small" style="margin-top:10px"></div></details></div>
+    <div class="card"><h2>Custom providers</h2><div id="customProviders"></div>
+      <details style="margin-top:10px"><summary>+ Add custom base_url provider</summary>
+      <div class="row" style="margin-top:8px">
+        <div><label>Provider ID</label><input id="cpId" placeholder="my-llm"></div>
+        <div><label>Label</label><input id="cpLabel" placeholder="My LLM"></div>
+        <div><label>Base URL</label><input id="cpEndpoint" placeholder="https://llm.example.com/v1"></div>
+        <div><label>Wire format</label><select id="cpWire"><option>openai_chat</option><option>anthropic_messages</option><option>gemini</option></select></div>
+        <div><label>Auth ref</label><input id="cpAuth" placeholder="env:MY_LLM_KEY"></div>
+        <div><label>Models (comma-separated)</label><input id="cpModels" placeholder="model-a, model-b"></div>
+      </div>
+      <p id="cpAuthWarn" class="field-err" style="display:none">Do not paste raw API keys here — use env:VAR_NAME.</p>
+      <div class="actions"><button id="btnAddCustomProvider">Add provider</button></div>
+      </details>
+      <p class="muted small">Custom providers are stored in Settings and appear in every provider dropdown. Never paste a raw API key — use env:VAR_NAME.</p>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-files">
+    <div class="files-split">
+      <details open id="fileTreeDrawer" class="card"><summary class="drawer-head"><span>Files &amp; folders</span><span id="fileCount" class="muted small"></span></summary>
+        <div class="row" style="margin-bottom:8px">
+          <div><input id="newFilePath" placeholder="personas/my-agent.md" aria-label="New file or folder path"></div>
+        </div>
+        <div class="actions" style="margin:0 0 10px"><button id="btnNewFile">+ File</button><button id="btnNewFolder" class="ghost">+ Folder</button><button id="btnImportZip" class="ghost">Import ZIP</button></div>
+        <div id="fileTree"></div>
+        <div id="zipDropOverlay" style="display:none; border:2px dashed var(--gold); border-radius:4px; padding:18px; text-align:center; color:var(--gold); margin-top:8px;">Drop .zip archive to import into files/</div>
+        <p class="muted small">Files live under <code>files/</code>. A file can be a member's charter or an attached file — pick it in the member editor or connect it in the graph.</p>
+      </details>
+      <div class="card"><h2>Editor</h2>
+        <div id="fileEditorHead" class="muted small">Select a file to edit.</div>
+        <div id="attachBox" style="display:none; margin:8px 0;"><label>Attach as charter to</label><div class="row-inline"><div><select id="attachTarget"></select></div><div class="inline-actions"><button id="btnDoAttach">Attach</button> <button id="btnCancelAttach" class="ghost">Cancel</button></div></div></div>
+        <div id="fileBinaryCard" style="display:none"></div>
+        <textarea id="fileEditor" style="display:none; width:100%"></textarea>
+        <div class="actions"><button id="btnSaveFile" class="gold" style="display:none">Save file</button>
+        <button id="btnAttachCharter" class="ghost" style="display:none">Attach as charter…</button>
+        <button id="btnAddToGraph" class="ghost" style="display:none">Add to graph</button>
+        <button id="btnDeleteFile" class="danger" style="display:none">Delete file</button>
+        <span id="fileDirty" class="muted small"></span></div>
+        <p id="fileMeta" class="muted small"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-runs">
+    <div class="card"><h2>Launch a run</h2>
+      <div class="launchbar">
+        <div class="field team-field"><label>Team</label><select id="runTeam"></select></div>
+        <div class="field grow"><label>Goal</label><input id="runGoal" placeholder="Produce a sourced brief on …"></div>
+        <div class="field"><label>Provider</label><select id="runMock"><option value="true">Mock (offline demo, no key)</option><option value="false">Real providers (uses configured API keys)</option></select></div>
+        <button id="btnRun" class="gold">Run team</button>
+      </div>
+    </div>
+    <div class="card"><h2>Run history</h2><div id="runsTable"></div></div>
+    <div class="card" id="runDetailCard" style="display:none"><h2>Run detail</h2><div id="runDetail"></div></div>
+  </section>
+
+  <section class="tab" id="tab-settings">
+    <div class="card"><div style="display:flex;gap:8px;align-items:center;"><h2 style="margin:0">Telegram</h2><span id="tgPill" class="pill">Not set</span><span id="tgUnsaved" class="pill ochre" style="display:none">Unsaved</span></div>
+      <label>Bot token (stored locally, 0600, never shown back)</label>
+      <div class="pw-wrap"><input id="tgToken" type="password" placeholder="leave empty to keep the current token"><button type="button" class="ghost" id="btnToggleTgToken">Show</button></div>
+      <label>Allowlist user IDs (comma separated)</label>
+      <input id="tgAllow" placeholder="123456789, 987654321">
+      <p id="tgAllowErr" class="field-err" style="display:none"></p>
+      <p class="muted small" id="tgStatus"></p>
+      <div class="actions"><button id="btnSaveTelegram">Save Telegram settings</button></div>
+    </div>
+    <div class="card"><h2>Change UI password</h2>
+      <p class="muted small">This is the token that logs you into this UI. Changing it here takes effect immediately and survives a server restart.</p>
+      <p id="uiTokenNote" class="muted small" style="display:none"></p>
+      <label>Current token</label>
+      <div class="pw-wrap"><input id="uiCurToken" type="password" autocomplete="current-password" placeholder="current token"><button type="button" class="ghost" id="btnToggleCurToken">Show</button></div>
+      <label>New token (at least 8 characters)</label>
+      <div class="pw-wrap"><input id="uiNewToken" type="password" autocomplete="new-password" placeholder="new token"><button type="button" class="ghost" id="btnToggleNewToken">Show</button></div>
+      <label>Confirm new token</label>
+      <div class="pw-wrap"><input id="uiNewToken2" type="password" autocomplete="new-password" placeholder="repeat new token"><button type="button" class="ghost" id="btnToggleNewToken2">Show</button></div>
+      <div class="actions"><button id="btnChangeUIToken">Change UI password</button>
+      <button id="btnSignOut2" class="ghost">Sign out</button></div>
+      <p class="muted small" id="uiTokenStatus"></p>
+    </div>
+    <div class="card"><div style="display:flex;gap:8px;align-items:center;"><h2 style="margin:0">Approvals &amp; budgets</h2><span id="budgetsUnsaved" class="pill ochre" style="display:none">Unsaved</span></div>
+      <div class="row">
+        <div><label>Default approval mode</label><select id="approvalDefault"><option value="smart">Smart — ask on risky actions</option><option value="approve">Approve all — ask every tool</option><option value="off">Off — disposable host only</option></select></div>
+        <div><label>Run budget (USD)</label><input id="budgetRun" type="number" step="0.5" min="0"></div>
+        <div><label>Team budget (USD)</label><input id="budgetTeam" type="number" step="0.5" min="0"></div>
+      </div>
+      <p id="approvalOffWarn" class="muted small" style="display:none; color:var(--ochre)">Approval Off is intended only for disposable or sandboxed hosts.</p>
+      <div class="actions"><button id="btnSaveBudgets">Save approvals &amp; budgets</button></div>
+    </div>
+    <div class="card"><div style="display:flex;gap:8px;align-items:center;justify-content:space-between;"><h2 style="margin:0">Scheduled jobs</h2><button id="btnCronTick" class="ghost small">Run due jobs now</button></div>
+      <div id="cronList"></div>
+      <details style="margin-top:10px"><summary>+ Add job</summary>
+      <div class="row" style="margin-top:8px">
+        <div><label>Job name</label><input id="cronName" placeholder="morning-brief"></div>
+        <div><label>Team</label><select id="cronTeam"></select></div>
+        <div><label>Goal</label><input id="cronGoal" placeholder="Produce the morning brief"></div>
+        <div><label>Interval (minutes)</label><input id="cronInterval" type="number" value="60" min="1"></div>
+      </div>
+      <div class="actions"><button id="btnAddCron">Add cron job</button></div>
+      </details>
+    </div>
+    <div class="card"><h2>Skills</h2><div id="skillsList"></div>
+      <details id="skillEditorDrawer" style="margin-top:10px"><summary>+ New / edit skill (YAML)</summary>
+      <label>Skill YAML</label><textarea id="newSkillText" style="min-height:120px">name: my-skill
+description: What this skill teaches the member.
+version: "1"
+instructions: |
+  Follow these steps carefully.
+tools: [web, file_read]
+</textarea>
+      <div class="actions"><button id="btnAddSkill">Save skill</button></div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<div id="memberModal" role="dialog" aria-modal="true" aria-labelledby="memberModalTitle"><div class="modal-card"><div class="modal-head"><h2 id="memberModalTitle">Member</h2><button class="ghost" id="btnCloseMemberModal" aria-label="Close">×</button></div><div id="memberFormWrap"></div></div></div>
+<div id="zipModal" role="dialog" aria-modal="true" aria-labelledby="zipModalTitle"><div class="modal-card" style="max-width:520px"><div class="modal-head"><h2 id="zipModalTitle">Import ZIP into files/</h2><button class="ghost" id="btnCloseZip" aria-label="Close">×</button></div>
+  <div id="zipProgress" style="display:none"></div>
+  <div id="zipBody">
+    <div id="zipDropzone"><div style="font-size:13px; font-weight:600;">Choose a .zip file or drop it here</div><div class="muted small">Max 10 MB upload · Max 25 MB extracted · Max 200 files · Unsafe paths and credentials are blocked</div><input type="file" id="zipFileInput" accept=".zip" style="display:none"></div>
+    <p id="zipFileLine" class="mono small" style="display:none"></p>
+    <p id="zipError" class="loginError" style="display:none"></p>
+    <label>Extract into folder (optional)</label><input id="zipDest" placeholder="packs/superagent (leave empty for files/ root)">
+    <label>If a file already exists</label><select id="zipOverwrite"><option value="0">Skip existing files (safe)</option><option value="1">Overwrite existing files</option></select>
+  </div>
+  <div id="zipResult" style="display:none"></div>
+  <div class="actions"><button id="btnDoZip" class="gold" disabled>Upload &amp; extract</button><button id="btnCancelZip" class="ghost">Cancel</button></div>
+</div></div>
+<div id="addNodeModal" role="dialog" aria-modal="true" aria-labelledby="addNodeTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="addNodeTitle">Add to graph</h2>
+      <button class="ghost" id="btnCloseAddNode" aria-label="Close">×</button>
+    </div>
+    <p id="addNodeSub" class="muted small" style="margin:0 0 8px"></p>
+    <div id="addNodeBody"></div>
+  </div>
+</div>
+
+<div id="loginScreen">
+  <div class="loginCard">
+    <svg width="24" height="24" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L17 7 L14 7 L14 13 L17 13 L10 19 L3 13 L6 13 L6 7 L3 7 Z" fill="none" stroke="#D4AF37" stroke-width="1.5"/></svg>
+    <h1>Airlangga</h1>
+    <div class="eyebrow">Agentic Team Studio</div>
+    <p class="muted small" style="margin-top:12px">Enter your UI token to log in.</p>
+    <form id="loginForm">
+      <label>UI token</label>
+      <div class="pw-wrap"><input id="loginToken" type="password" autocomplete="current-password" placeholder="UI token"><button type="button" class="ghost" id="btnToggleToken">Show</button></div>
+      <p id="loginError" class="loginError"></p>
+      <p><button type="submit" class="gold" id="btnLogin" style="width:100%">Enter Studio</button></p>
+    </form>
+    <p class="muted small">The token is stored only in this tab (sessionStorage) and never in the URL. On a public server the token is the one set as AIRLANGGA_UI_TOKEN.</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+let S = null;            // full /api/state payload
+let selected = null;     // selected node id
+let connectMode = false, connectSource = null;
+let editingFile = null, fileDirtyFlag = false;
+let graphDirty = false, zoom = 1, runPoll = null, activeRunId = null, runDetailTab = "timeline";
+let nodeH = {};          // measured node heights, for port geometry
+let edgeEls = {};        // edge id -> {path, hit, label}
+let nodeEls = {};        // node id -> div
+let cachedSkills = [];   // skills from /api/skills, for the Add-node sheet
+
+const NODE_W = { main_brain: 216, team: 204, member: 204, model: 208, file: 192, folder: 192, tool: 152, skill: 156 };
+const EDGE_STYLE = {
+  assigns:    { color: "#D4AF37", w: 2.2, dash: "",    label: "assigns" },
+  powers:     { color: "#D4AF37", w: 2.2, dash: "",    label: "powers" },
+  has_member: { color: "#D96B43", w: 1.8, dash: "",    label: "member" },
+  uses_model: { color: "#4CC38A", w: 1.8, dash: "",    label: "uses model" },
+  has_charter:{ color: "#C89B54", w: 1.8, dash: "",    label: "charter" },
+  has_file:   { color: "#C89B54", w: 1.8, dash: "2 4", label: "attaches file" },
+  uses_tool:  { color: "#857A66", w: 1.5, dash: "4 3", label: "tool" },
+  uses_skill: { color: "#857A66", w: 1.5, dash: "4 3", label: "skill" },
+  depends_on: { color: "#56B4C8", w: 1.6, dash: "5 4", label: "depends on" },
+};
+const MARKER_FOR = { "#D4AF37": "arr-gold", "#D96B43": "arr-terra", "#4CC38A": "arr-jade",
+  "#C89B54": "arr-ochre", "#857A66": "arr-pewter", "#56B4C8": "arr-cyan" };
+let suppressNextClick = false;
+// Canonical edge directions (backend convention: powers flows model -> main_brain).
+const EDGE_KIND_RULES = [
+  ["main_brain", "team", "assigns"], ["model", "main_brain", "powers"],
+  ["team", "member", "has_member"], ["member", "model", "uses_model"],
+  ["member", "file", "has_file"], ["member", "folder", "has_file"], ["member", "tool", "uses_tool"],
+  ["member", "skill", "uses_skill"], ["team", "team", "depends_on"],
+  ["member", "member", "depends_on"],
+];
+function inferEdgeKind(a, b) {
+  for (const [sa, ta, kind] of EDGE_KIND_RULES) {
+    if (a.type === sa && b.type === ta) return { kind, from: a.id, to: b.id };
+    if (a.type === ta && b.type === sa) return { kind, from: b.id, to: a.id };
+  }
+  return null;
+}
+const HUMAN = { main_brain: "Main Brain", team: "Team", member: "Member", model: "Model",
+  file: "File", folder: "Folder", tool: "Tool", skill: "Skill",
+  lead_member: "Lead member", separate: "Separate brain",
+  smart: "Smart", approve: "Approve all", off: "Off" };
+const human = s => HUMAN[s] || String(s ?? "").replace(/_/g, " ");
+
+let statusTimer = null;
+function status(msg, cls) {
+  const el = document.getElementById("status");
+  clearTimeout(statusTimer);
+  el.textContent = msg || ""; el.className = cls || "";
+  if (msg) { el.classList.add("show"); statusTimer = setTimeout(() => el.classList.remove("show"), cls === "err" ? 7000 : 4500); }
+}
+document.getElementById("status").addEventListener("click", () => document.getElementById("status").classList.remove("show"));
+
+function token() { return sessionStorage.getItem("airlangga_token") || ""; }
+async function api(path, method, body) {
+  const headers = { "Content-Type": "application/json" };
+  const t = token(); if (t) headers["X-Airlangga-Token"] = t;
+  const res = await fetch(path, { method: method || "GET", headers, body: body ? JSON.stringify(body) : undefined });
+  if (res.status === 401) {
+    showLogin();
+    const err = new Error("unauthorized"); err.unauthorized = true; throw err;
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const err = new Error(data.error || ("HTTP " + res.status)); err.data = data; err.code = data.code || null; throw err; }
+  return data;
+}
+function showLogin(msg) {
+  document.body.classList.add("auth-pending");
+  document.getElementById("loginScreen").style.display = "flex";
+  if (msg !== undefined) document.getElementById("loginError").textContent = msg;
+  document.getElementById("loginToken").focus();
+}
+function hideLogin() {
+  document.body.classList.remove("auth-pending");
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("loginError").textContent = "";
+}
+function signOut() {
+  if (runPoll) { clearInterval(runPoll); runPoll = null; }
+  activeRunId = null;
+  sessionStorage.removeItem("airlangga_token");
+  S = null; selected = null;
+  showLogin("Signed out.");
+}
+document.getElementById("btnSignOut").addEventListener("click", signOut);
+document.getElementById("btnSignOut2").addEventListener("click", signOut);
+document.getElementById("btnToggleToken").addEventListener("click", () => {
+  const inp = document.getElementById("loginToken");
+  const show = inp.type === "password";
+  inp.type = show ? "text" : "password";
+  document.getElementById("btnToggleToken").textContent = show ? "Hide" : "Show";
+});
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function field(id, label, value, type) {
+  return `<label>${esc(label)}</label><input id="${id}" type="${type || "text"}" value="${esc(value ?? "")}">`;
+}
+function numField(id, label, value) {
+  return `<label>${esc(label)}</label><input id="${id}" type="number" step="any" min="0" value="${esc(value ?? "")}">`;
+}
+function fmtUsd(v) { return "$" + (Number(v) || 0).toFixed(4); }
+function hhmmss(ts) { const s = String(ts || ""); return s.length >= 19 ? s.slice(11, 19) : s; }
+
+// ---------- tabs ----------
+function switchTab(name) {
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.id === "tab-" + name));
+  if (name === "runs") renderRuns();
+  if (name === "graph" && window.innerWidth < 768) fitGraph();
+}
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-tab]"); if (!b) return;
+  switchTab(b.dataset.tab);
+});
+
+// ---------- state ----------
+async function loadState() {
+  S = await api("/api/state");
+  const hasToken = !!token();
+  document.getElementById("tokenBadge").textContent = hasToken ? "token active" : "localhost";
+  document.getElementById("btnSignOut").style.display = hasToken ? "" : "none";
+  document.getElementById("teamCount").textContent = Object.keys(S.config.teams).length;
+  document.getElementById("presetCount").textContent = S.providers.length;
+  setDirty(false);
+  renderGraph(); renderTeams(); renderModels(); renderFiles(); renderSettings(); renderRunTeamSelect();
+  requestAnimationFrame(() => { if (window.innerWidth < 768) fitGraph(); });
+}
+function graph() { return S.graph; }
+function nodeById(id) { return graph().nodes.find(n => n.id === id); }
+function setDirty(v) {
+  graphDirty = v;
+  const b = document.getElementById("btnSaveGraph");
+  b.textContent = v ? "Save graph *" : "Save graph";
+  b.classList.toggle("dirty", v);
+  b.title = v ? "Unsaved graph changes — click to save" : "Graph saved";
+}
+// ---------- graph ----------
+function edgeGeom(e) {
+  const a = nodeById(e.from), b = nodeById(e.to); if (!a || !b) return null;
+  const aw = NODE_W[a.type] || 180, bw = NODE_W[b.type] || 180;
+  const ah = nodeH[a.id] || 64, bh = nodeH[b.id] || 64;
+  // Port-to-port: source right port -> target left port; when the source
+  // sits to the right of the target, flip to left -> right so the
+  // arrowhead always lands on a node boundary, never underneath a node.
+  const ltr = (a.x + aw / 2) <= (b.x + bw / 2);
+  const x1 = ltr ? a.x + aw : a.x, y1 = a.y + ah / 2;
+  const x2 = ltr ? b.x : b.x + bw, y2 = b.y + bh / 2;
+  const mx = (x1 + x2) / 2;
+  return { x1, y1, x2, y2, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` };
+}
+function drawEdges() {
+  const svg = document.getElementById("edges");
+  const markers = Object.entries(MARKER_FOR).map(([color, id]) =>
+    `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${color}"/></marker>`).join("");
+  svg.innerHTML = `<defs>${markers}</defs>`;
+  edgeEls = {};
+  for (const e of graph().edges) {
+    const g = edgeGeom(e); if (!g) continue;
+    const st = EDGE_STYLE[e.kind] || { color: "#857A66", w: 1.6, dash: "", label: e.kind };
+    const ns = "http://www.w3.org/2000/svg";
+    const hit = document.createElementNS(ns, "path");
+    hit.setAttribute("d", g.d); hit.setAttribute("stroke", "transparent"); hit.setAttribute("stroke-width", "14");
+    hit.setAttribute("fill", "none"); hit.setAttribute("class", "hit");
+    hit.addEventListener("click", ev => { ev.stopPropagation(); selected = e.id; renderGraph(); renderNodeForm(); });
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", g.d); path.setAttribute("stroke", st.color); path.setAttribute("stroke-width", String(st.w));
+    if (st.dash) path.setAttribute("stroke-dasharray", st.dash);
+    path.setAttribute("fill", "none"); path.setAttribute("marker-end", `url(#${MARKER_FOR[st.color] || "arr-pewter"})`);
+    path.style.pointerEvents = "none";
+    const label = document.createElementNS(ns, "text");
+    label.setAttribute("x", (g.x1 + g.x2) / 2); label.setAttribute("y", (g.y1 + g.y2) / 2 - 4);
+    label.setAttribute("fill", "#B3AA9B"); label.setAttribute("font-size", "10");
+    label.setAttribute("text-anchor", "middle"); label.textContent = st.label;
+    const rect = document.createElementNS(ns, "rect");
+    const w = st.label.length * 6 + 10;
+    rect.setAttribute("x", (g.x1 + g.x2) / 2 - w / 2); rect.setAttribute("y", (g.y1 + g.y2) / 2 - 15);
+    rect.setAttribute("width", w); rect.setAttribute("height", "14"); rect.setAttribute("rx", "3");
+    rect.setAttribute("fill", "#0D0C0A"); rect.setAttribute("stroke", "#2E2A22"); rect.setAttribute("stroke-width", "1");
+    svg.appendChild(hit); svg.appendChild(path); svg.appendChild(rect); svg.appendChild(label);
+    edgeEls[e.id] = { path, hit, label, rect, edge: e };
+  }
+}
+function updateEdgesFor(nodeId) {
+  for (const e of graph().edges) {
+    if (e.from !== nodeId && e.to !== nodeId) continue;
+    const refs = edgeEls[e.id]; if (!refs) continue;
+    const g = edgeGeom(e); if (!g) continue;
+    const st = EDGE_STYLE[e.kind] || { color: "#857A66", w: 1.6, dash: "", label: e.kind };
+    refs.path.setAttribute("d", g.d); refs.hit.setAttribute("d", g.d);
+    refs.label.setAttribute("x", (g.x1 + g.x2) / 2); refs.label.setAttribute("y", (g.y1 + g.y2) / 2 - 4);
+    const w = st.label.length * 6 + 10;
+    refs.rect.setAttribute("x", (g.x1 + g.x2) / 2 - w / 2); refs.rect.setAttribute("y", (g.y1 + g.y2) / 2 - 15);
+  }
+}
+function nodeBadge(n) {
+  const d = n.data || {};
+  if (n.type === "main_brain") return S.config.main_brain && S.config.main_brain.sovereign ? ["SOVEREIGN", "gold"] : null;
+  if (n.type === "member") {
+    const mid = n.id.split(":").pop();
+    const teamName = d.team || (n.id.split(":").length === 3 ? n.id.split(":")[1] : null);
+    for (const t of Object.values(S.config.teams)) if (t.lead_member === mid) return ["LEAD", "gold"];
+    const assigned = teamName && S.config.teams[teamName] && S.config.teams[teamName].members.some(m => m.id === mid);
+    if (!assigned) return ["UNASSIGNED", "ochre"];
+    if (d.charter_file) return ["CHARTER", "ochre"];
+    return null;
+  }
+  if (n.type === "model") {
+    const c = graph().edges.filter(e => e.to === n.id && (e.kind === "powers" || e.kind === "uses_model")).length;
+    return c > 0 ? ["\u00d7" + c, "gold"] : null;
+  }
+  if (n.type === "file") {
+    const isCharter = Object.values(S.config.teams).some(t => t.members.some(m => m.charter_file === (d.path || n.label)));
+    return isCharter ? ["CHARTER", "ochre"] : null;
+  }
+  return null;
+}
+function renderGraph() {
+  const canvas = document.getElementById("canvas");
+  canvas.querySelectorAll(".node").forEach(n => n.remove());
+  nodeEls = {}; nodeH = {};
+  let maxX = 0, maxY = 0;
+  for (const n of graph().nodes) {
+    const div = document.createElement("div");
+    div.className = "node " + n.type + (selected === n.id ? " selected" : "") + (connectSource === n.id ? " connect-source" : "");
+    div.style.left = n.x + "px"; div.style.top = n.y + "px";
+    div.style.width = (NODE_W[n.type] || 180) + "px";
+    div.dataset.id = n.id;
+    const detail = (n.type === "model" || n.type === "main_brain") ? `${n.data.provider || ""}/${n.data.model || ""}`
+      : n.type === "member" ? (n.data.role || "") + (n.data.charter_file ? " \u00b7 " + n.data.charter_file : "")
+      : n.type === "team" ? (n.data.template || "")
+      : (n.data.path || n.data.provider || "");
+    const badge = nodeBadge(n);
+    div.innerHTML = `<span class="port in"></span><span class="port out"></span>${badge ? `<span class="badge ${badge[1]}">${esc(badge[0])}</span>` : ""}<div class="t">${esc(human(n.type))}</div><div class="l">${esc(n.label)}</div><div class="d">${esc(detail)}</div>`;
+    div.addEventListener("pointerdown", ev => startDrag(ev, n, div));
+    div.querySelector(".port.out").addEventListener("pointerdown", ev => startPortDrag(ev, n));
+    div.addEventListener("click", ev => { ev.stopPropagation(); onNodeClick(n); });
+    canvas.appendChild(div);
+    nodeEls[n.id] = div; nodeH[n.id] = div.offsetHeight || 64;
+    maxX = Math.max(maxX, n.x + (NODE_W[n.type] || 180)); maxY = Math.max(maxY, n.y + nodeH[n.id]);
+  }
+  canvas.style.width = Math.max(1200, maxX + 320) + "px";
+  canvas.style.height = Math.max(800, maxY + 240) + "px";
+  const svgEl = document.getElementById("edges");
+  svgEl.style.width = canvas.style.width; svgEl.style.height = canvas.style.height;
+  drawEdges();
+  document.getElementById("graphEmptyCard").style.display = graph().nodes.length ? "none" : "block";
+  // Highlight the selection: selected edge gets thicker + gold; otherwise dim unrelated edges.
+  if (selected) {
+    if (selected.startsWith("e-")) {
+      const refs = edgeEls[selected];
+      if (refs) {
+        const w = (EDGE_STYLE[refs.edge.kind] || { w: 1.6 }).w;
+        refs.path.setAttribute("stroke-width", String(w + 1.2));
+        refs.path.setAttribute("stroke", "#D4AF37");
+      }
+    } else {
+      for (const [id, refs] of Object.entries(edgeEls)) {
+        const e = refs.edge;
+        const on = e.from === selected || e.to === selected;
+        refs.path.style.opacity = on ? "1" : "0.25";
+        refs.label.style.opacity = on ? "1" : "0.25";
+        refs.rect.style.opacity = on ? "1" : "0.25";
+      }
+    }
+  }
+}
+function startDrag(ev, n, div) {
+  if (connectMode) return;
+  if (ev.target.closest(".port")) return;
+  if (ev.button !== undefined && ev.button !== 0) return;
+  const startX = ev.clientX, startY = ev.clientY, origX = n.x, origY = n.y;
+  const pid = ev.pointerId;
+  let dragging = false;
+  const move = ev2 => {
+    if (ev2.pointerId !== pid || pinchActive) return;
+    if (!dragging && Math.hypot(ev2.clientX - startX, ev2.clientY - startY) < 4) return;
+    dragging = true; suppressNextClick = true;
+    n.x = Math.max(0, Math.round(origX + (ev2.clientX - startX) / zoom));
+    n.y = Math.max(0, Math.round(origY + (ev2.clientY - startY) / zoom));
+    div.style.left = n.x + "px"; div.style.top = n.y + "px";
+    updateEdgesFor(n.id);
+  };
+  const up = () => {
+    document.removeEventListener("pointermove", move);
+    document.removeEventListener("pointerup", up);
+    if (dragging) setDirty(true);
+  };
+  document.addEventListener("pointermove", move);
+  document.addEventListener("pointerup", up);
+}
+function startPortDrag(ev, n) {
+  ev.stopPropagation(); ev.preventDefault();
+  if (!connectMode) setConnectMode(true);
+  connectSource = n.id;
+  document.getElementById("connectFrom").textContent = n.label;
+  document.getElementById("connectBanner").classList.add("show");
+  renderGraph();
+  status("Connect mode: click the target node.");
+}
+function onNodeClick(n) {
+  if (suppressNextClick) { suppressNextClick = false; return; }
+  if (connectMode) {
+    if (!connectSource) {
+      connectSource = n.id;
+      document.getElementById("connectFrom").textContent = n.label;
+      document.getElementById("connectBanner").classList.add("show");
+      renderGraph(); return;
+    }
+    if (connectSource === n.id) { status("A node cannot connect to itself.", "err"); return; }
+    const src = nodeById(connectSource);
+    const picked = document.getElementById("edgeKind").value;
+    let kind, from, to;
+    if (picked && picked !== "auto") { kind = picked; from = src.id; to = n.id; }
+    else {
+      const inf = inferEdgeKind(src, n);
+      if (!inf) { status(`No connection type for ${human(src.type)} \u2192 ${human(n.type)} \u2014 pick a kind from the list.`, "err"); return; }
+      ({ kind, from, to } = inf);
+    }
+    if (graph().edges.some(e => e.from === from && e.to === to && e.kind === kind)) { status("That connection already exists.", "err"); return; }
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from, to, kind });
+    status("Edge added \u2014 press Save graph to persist.", "ok");
+    connectSource = null; document.getElementById("connectBanner").classList.remove("show");
+    setDirty(true); renderGraph(); return;
+  }
+  selected = n.id; renderGraph(); renderNodeForm();
+  if (window.innerWidth <= 820) openSheet();
+}
+// ---------- graph extras: zoom pill, sheet, shortcuts ----------
+document.getElementById("btnZoomOutM").addEventListener("click", () => setZoom(zoom * 0.85));
+document.getElementById("btnZoomInM").addEventListener("click", () => setZoom(zoom * 1.18));
+document.getElementById("btnZoomLabelM").addEventListener("click", () => setZoom(1));
+document.getElementById("btnFitM").addEventListener("click", fitGraph);
+document.getElementById("btnClosePanel").addEventListener("click", closePanel);
+document.getElementById("sheetScrim").addEventListener("click", closePanel);
+document.getElementById("btnEmptyCreateTeam").addEventListener("click", () => {
+  switchTab("teams");
+  const card = document.getElementById("createTeamCard");
+  if (card.style.display === "none") document.getElementById("btnNewTeam").click();
+  document.getElementById("newTeamName").focus();
+});
+document.getElementById("btnEmptyAddTeam").addEventListener("click", () => {
+  createGraphNode("team");
+});
+(function () {
+  const grab = document.getElementById("sheetGrabber");
+  const panel = document.getElementById("sidePanel");
+  let startY = null, tall = false;
+  grab.addEventListener("pointerdown", ev => { startY = ev.clientY; grab.setPointerCapture(ev.pointerId); });
+  grab.addEventListener("pointermove", ev => {
+    if (startY === null) return;
+    const dy = ev.clientY - startY;
+    if (dy > 90) { startY = null; closePanel(); }
+    else if (dy < -60 && !tall) { tall = true; panel.classList.add("sheet-tall"); }
+  });
+  grab.addEventListener("pointerup", () => { startY = null; });
+})();
+document.addEventListener("keydown", ev => {
+  const tag = (ev.target.tagName || "").toLowerCase();
+  const typing = tag === "input" || tag === "textarea" || tag === "select" || ev.target.isContentEditable;
+  if (ev.key === "Escape") {
+    document.querySelectorAll("#memberModal.open, #zipModal.open, #addNodeModal.open").forEach(m => m.classList.remove("open"));
+    if (selected) closePanel();
+    return;
+  }
+  if (typing) return;
+  if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "s") { ev.preventDefault(); document.getElementById("btnSaveGraph").click(); return; }
+  if (ev.key.toLowerCase() === "c" && !ev.metaKey && !ev.ctrlKey) { setConnectMode(!connectMode); return; }
+  if (ev.key.toLowerCase() === "f" && !ev.metaKey && !ev.ctrlKey) { fitGraph(); return; }
+  if ((ev.key === "Delete" || ev.key === "Backspace") && selected) { ev.preventDefault(); deleteSelected(); }
+});
+window.addEventListener("beforeunload", ev => { if (graphDirty) { ev.preventDefault(); ev.returnValue = ""; } });
+
+function setConnectMode(on) {
+  connectMode = on; connectSource = null;
+  document.getElementById("connectBanner").classList.remove("show");
+  document.getElementById("btnModeSelect").classList.toggle("seg-on", !on);
+  document.getElementById("btnModeConnect").classList.toggle("seg-on", on);
+  document.getElementById("edgeKind").style.display = on ? "" : "none";
+  status(on ? "Connect mode — click a source node, then its target." : "Select mode.");
+  renderGraph();
+}
+document.getElementById("btnModeSelect").addEventListener("click", () => setConnectMode(false));
+document.getElementById("btnModeConnect").addEventListener("click", () => setConnectMode(true));
+document.getElementById("btnCancelConnect").addEventListener("click", () => setConnectMode(false));
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && connectMode) setConnectMode(false); });
+const TOOL_DESC = {
+  web: "Search the web and read pages.",
+  file_read: "Read files from the workspace.",
+  file_write: "Create and edit workspace files.",
+  terminal: "Run shell commands (subject to approval).",
+  skills_research: "Search and load reusable research skills.",
+  browser: "Fetch and inspect web pages safely.",
+};
+
+function closeAddSheet() { document.getElementById("addNodeModal").classList.remove("open"); }
+document.getElementById("btnCloseAddNode").addEventListener("click", closeAddSheet);
+document.getElementById("addNodeModal").addEventListener("click", ev => { if (ev.target.id === "addNodeModal") closeAddSheet(); });
+
+function createGraphNode(type, anchorNode) {
+  const c = viewCenterWorld();
+  const x = anchorNode ? anchorNode.x + (NODE_W[anchorNode.type] || 204) + 72
+    : Math.max(0, Math.round(c.x - (NODE_W[type] || 180) / 2));
+  const y = anchorNode ? anchorNode.y + 16
+    : Math.max(0, Math.round(c.y - 32));
+  const id = type + ":" + Date.now().toString(36);
+  const data = type === "team" ? { template: "blank", team_budget: { usd: 5 }, team_brain_mode: "lead_member" }
+    : type === "member" ? { role: "", approval: "smart", toolsets: [], skills: [], attached_files: [] }
+    : type === "model" ? { provider: "mock", model: "mock", auth_ref: "none", wire_format: "mock" }
+    : (type === "file" || type === "folder") ? { path: "" }
+    : type === "tool" ? { toolset: "" } : type === "skill" ? { path: "" } : {};
+  const node = { id, type, label: "New " + human(type), x, y, data };
+  graph().nodes.push(node);
+
+  // Auto-wire canonical edges when context makes the relationship unambiguous.
+  if (type === "team" && nodeById("main_brain")) {
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from: "main_brain", to: id, kind: "assigns" });
+  } else if (type === "member") {
+    const targetTeam = (anchorNode && anchorNode.type === "team") ? anchorNode
+      : (graph().nodes.filter(n => n.type === "team").length === 1 ? graph().nodes.find(n => n.type === "team") : null);
+    if (targetTeam) graph().edges.push({ id: "e-" + Date.now().toString(36), from: targetTeam.id, to: id, kind: "has_member" });
+  } else if (type === "model" && anchorNode && anchorNode.type === "member") {
+    graph().edges = graph().edges.filter(e => !(e.from === anchorNode.id && e.kind === "uses_model"));
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from: anchorNode.id, to: id, kind: "uses_model" });
+  } else if (type === "model" && anchorNode && anchorNode.type === "main_brain") {
+    graph().edges = graph().edges.filter(e => !(e.to === "main_brain" && e.kind === "powers"));
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from: id, to: "main_brain", kind: "powers" });
+  }
+
+  selected = id; setDirty(true); renderGraph(); renderNodeForm();
+  if (window.innerWidth <= 820) openSheet();
+  return node;
+}
+
+function attachFileToMember(memberNode, path, kind, isFolder) {
+  const type = isFolder ? "folder" : "file";
+  let fn = graph().nodes.find(x => (x.type === "file" || x.type === "folder") && (x.data.path === path || x.label === path));
+  if (!fn) {
+    fn = { id: type + ":" + path, type, label: path, x: memberNode.x + 260, y: memberNode.y, data: { path } };
+    graph().nodes.push(fn);
+  }
+  if (kind === "has_charter") {
+    memberNode.data.charter_file = path;
+    graph().edges = graph().edges.filter(e => !(e.from === memberNode.id && e.kind === "has_charter"));
+  }
+  if (!graph().edges.some(e => e.from === memberNode.id && e.to === fn.id && e.kind === kind)) {
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from: memberNode.id, to: fn.id, kind });
+  }
+  setDirty(true); renderGraph(); renderNodeForm();
+}
+
+function attachSkillToMember(memberNode, skillName) {
+  const clean = skillName.trim().replace(/\.yaml$/i, "");
+  if (!clean) return;
+  const fname = clean + ".yaml";
+  let sn = graph().nodes.find(x => x.type === "skill" && (x.data.path === fname || x.label === fname || x.id === "skill:" + clean));
+  if (!sn) {
+    sn = { id: "skill:" + clean, type: "skill", label: fname, x: memberNode.x + 260, y: memberNode.y + 80, data: { path: fname } };
+    graph().nodes.push(sn);
+  }
+  if (!graph().edges.some(e => e.from === memberNode.id && e.to === sn.id && e.kind === "uses_skill")) {
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from: memberNode.id, to: sn.id, kind: "uses_skill" });
+  }
+  setDirty(true); renderGraph(); renderNodeForm();
+}
+
+function addOptBtn(cls, title, desc, action, badge) {
+  return `<button type="button" class="add-opt ${cls}" data-add-act="${esc(action)}">
+    <span class="add-title">${esc(title)}${badge ? `<span class="pill" style="margin-left:auto">${esc(badge)}</span>` : ""}</span>
+    <span class="add-desc">${esc(desc)}</span>
+  </button>`;
+}
+
+function openAddSheet(contextNode) {
+  const titleEl = document.getElementById("addNodeTitle");
+  const subEl = document.getElementById("addNodeSub");
+  const body = document.getElementById("addNodeBody");
+  const ctx = contextNode || (selected && !selected.startsWith("e-") ? nodeById(selected) : null);
+
+  if (ctx && ctx.type === "member") {
+    titleEl.textContent = "Attach to " + ctx.label;
+    subEl.textContent = "Creates and connects directly to this agent.";
+    body.innerHTML = `<div class="add-list">
+      ${addOptBtn("t-model", "Model", "Create a new AI model to power this agent.", "m-model")}
+      ${addOptBtn("t-file", "File or folder", "Attach a charter (e.g. superagent.md), note, or folder from Files.", "m-file")}
+      ${addOptBtn("t-tool", "Tool", "Allow this agent to use a built-in tool (web, files, terminal, browser).", "m-tool")}
+      ${addOptBtn("t-skill", "Skill", "Attach a step-by-step playbook (.yaml) from Settings \u2192 Skills.", "m-skill")}
+    </div>`;
+    body.querySelectorAll("[data-add-act]").forEach(btn => btn.addEventListener("click", () => {
+      const act = btn.dataset.addAct;
+      if (act === "m-model") { closeAddSheet(); createGraphNode("model", ctx); }
+      else if (act === "m-file") renderMemberFilePicker(ctx);
+      else if (act === "m-tool") renderMemberToolPicker(ctx);
+      else if (act === "m-skill") renderMemberSkillPicker(ctx);
+    }));
+  } else if (ctx && ctx.type === "team") {
+    titleEl.textContent = "Add to team " + ctx.label;
+    subEl.textContent = "Add a member to this team, or place another building block on the canvas.";
+    body.innerHTML = `<div class="add-list">
+      ${addOptBtn("t-member", "Member", "Add a new AI agent directly to this team.", "t-member")}
+    </div>
+    <div class="add-divider">Or add to canvas</div>
+    <div class="add-list">
+      ${addOptBtn("t-team", "Team", "A group of agents sharing one goal and budget.", "c-team")}
+      ${addOptBtn("t-model", "Model", "An AI provider & model that can power one or more agents.", "c-model")}
+    </div>`;
+    body.querySelectorAll("[data-add-act]").forEach(btn => btn.addEventListener("click", () => {
+      const act = btn.dataset.addAct; closeAddSheet();
+      if (act === "t-member") createGraphNode("member", ctx);
+      else if (act === "c-team") createGraphNode("team");
+      else if (act === "c-model") createGraphNode("model");
+    }));
+  } else if (ctx && ctx.type === "main_brain") {
+    titleEl.textContent = "Add to Main Brain";
+    subEl.textContent = "Assign a new team or swap the model powering Main Brain.";
+    body.innerHTML = `<div class="add-list">
+      ${addOptBtn("t-team", "Team", "Create a new team assigned to Main Brain.", "mb-team")}
+      ${addOptBtn("t-model", "Model", "Create a new AI model to power Main Brain.", "mb-model")}
+    </div>`;
+    body.querySelectorAll("[data-add-act]").forEach(btn => btn.addEventListener("click", () => {
+      const act = btn.dataset.addAct; closeAddSheet();
+      createGraphNode(act === "mb-team" ? "team" : "model", ctx);
+    }));
+  } else {
+    titleEl.textContent = "Add to graph";
+    subEl.textContent = "Place a building block on the canvas.";
+    body.innerHTML = `<div class="add-list">
+      ${addOptBtn("t-team", "Team", "A group of agents sharing one goal and budget.", "c-team")}
+      ${addOptBtn("t-member", "Member", "One AI agent with a specific role inside a team.", "c-member")}
+      ${addOptBtn("t-model", "Model", "An AI provider & model that can power one or more agents.", "c-model")}
+    </div>
+    <p class="muted small" style="margin:12px 0 0">To attach a file, folder, tool, or skill, tap any <b>Member</b> on the graph.</p>`;
+    body.querySelectorAll("[data-add-act]").forEach(btn => btn.addEventListener("click", () => {
+      const act = btn.dataset.addAct; closeAddSheet();
+      createGraphNode(act.replace("c-", ""));
+    }));
+  }
+  document.getElementById("addNodeModal").classList.add("open");
+}
+
+function renderMemberFilePicker(memberNode) {
+  document.getElementById("addNodeTitle").textContent = "Attach file or folder";
+  document.getElementById("addNodeSub").textContent = "Pick an item from files/ to wire to " + memberNode.label + ".";
+  const body = document.getElementById("addNodeBody");
+  const items = S.files || [];
+  body.innerHTML = `
+    <label>How should this agent use a file?</label>
+    <select id="afRole"><option value="has_charter">Charter — persona &amp; rules loaded every run</option><option value="has_file">Reference — attached file or folder</option></select>
+    <div class="add-list" style="margin-top:10px">
+      ${items.map(f => addOptBtn("t-file", f.type === "folder" ? f.path + "/" : f.path,
+        f.type === "folder" ? "Folder attached as reference material." : "Workspace file under files/.",
+        (f.type === "folder" ? "D:" : "F:") + f.path, f.type === "folder" ? "folder" : "")).join("")
+        || `<p class="muted small">No files yet — create or import them in the Files tab.</p>`}
+    </div>
+    <label style="margin-top:12px">Or enter a path under files/</label>
+    <div class="row-inline">
+      <div><input id="afCustomPath" placeholder="personas/scout.md or docs/"></div>
+      <div class="inline-actions"><button type="button" id="btnAfCustom" class="gold">Attach</button></div>
+    </div>
+    <div class="actions"><button type="button" class="ghost" id="btnAfBack">\u2190 Back</button><button type="button" class="ghost" id="btnAfGoFiles">Open Files tab</button></div>`;
+  body.querySelectorAll("[data-add-act]").forEach(btn => btn.addEventListener("click", () => {
+    const raw = btn.dataset.addAct;
+    const isFolder = raw.startsWith("D:");
+    const path = raw.slice(2);
+    const kind = isFolder ? "has_file" : document.getElementById("afRole").value;
+    attachFileToMember(memberNode, path, kind, isFolder);
+    closeAddSheet();
+  }));
+  document.getElementById("btnAfCustom").addEventListener("click", () => {
+    const raw = document.getElementById("afCustomPath").value.trim(); if (!raw) return;
+    const isFolder = raw.endsWith("/");
+    const path = raw.replace(/\/+$/, "");
+    const kind = isFolder ? "has_file" : document.getElementById("afRole").value;
+    attachFileToMember(memberNode, path, kind, isFolder);
+    closeAddSheet();
+  });
+  document.getElementById("btnAfBack").onclick = () => openAddSheet(memberNode);
+  document.getElementById("btnAfGoFiles").onclick = () => { closeAddSheet(); closePanel(); switchTab("files"); };
+}
+
+function renderMemberToolPicker(memberNode) {
+  document.getElementById("addNodeTitle").textContent = "Attach tool to " + memberNode.label;
+  document.getElementById("addNodeSub").textContent = "Tap a tool to connect or disconnect it.";
+  const body = document.getElementById("addNodeBody");
+  const active = new Set(graph().edges
+    .filter(e => e.from === memberNode.id && e.kind === "uses_tool")
+    .map(e => { const t = nodeById(e.to); return t ? (t.data.toolset || t.label) : ""; })
+    .filter(Boolean));
+  body.innerHTML = `<div class="add-list">
+    ${S.toolsets.map(t => addOptBtn("t-tool", t, TOOL_DESC[t] || "Built-in toolset.", t, active.has(t) ? "Attached" : "")).join("")}
+  </div><div class="actions"><button type="button" class="ghost" id="btnAtBack">\u2190 Back</button><button type="button" class="gold" id="btnAtDone">Done</button></div>`;
+  body.querySelectorAll("[data-add-act]").forEach(btn => btn.addEventListener("click", () => {
+    const t = btn.dataset.addAct;
+    if (active.has(t)) active.delete(t); else active.add(t);
+    syncToolEdges(memberNode, [...active]);
+    renderNodeForm();
+    renderMemberToolPicker(memberNode);
+  }));
+  document.getElementById("btnAtBack").onclick = () => openAddSheet(memberNode);
+  document.getElementById("btnAtDone").onclick = closeAddSheet;
+}
+
+function renderMemberSkillPicker(memberNode) {
+  document.getElementById("addNodeTitle").textContent = "Attach skill to " + memberNode.label;
+  document.getElementById("addNodeSub").textContent = "Choose a skill playbook from Settings \u2192 Skills.";
+  const body = document.getElementById("addNodeBody");
+  body.innerHTML = `<div class="add-list">
+    ${cachedSkills.map(sk => addOptBtn("t-skill", sk.name.replace(/\.yaml$/i, ""), sk.path, sk.name)).join("")
+      || `<p class="muted small">No skills created yet \u2014 author one in Settings \u2192 Skills.</p>`}
+  </div>
+  <label style="margin-top:12px">Or enter a skill name</label>
+  <div class="row-inline">
+    <div><input id="asCustomName" placeholder="research"></div>
+    <div class="inline-actions"><button type="button" id="btnAsCustom" class="gold">Attach</button></div>
+  </div>
+  <div class="actions"><button type="button" class="ghost" id="btnAsBack">\u2190 Back</button><button type="button" class="ghost" id="btnAsGoSettings">Open Settings \u2192 Skills</button></div>`;
+  body.querySelectorAll("[data-add-act]").forEach(btn => btn.addEventListener("click", () => {
+    attachSkillToMember(memberNode, btn.dataset.addAct);
+    closeAddSheet();
+  }));
+  document.getElementById("btnAsCustom").addEventListener("click", () => {
+    const v = document.getElementById("asCustomName").value.trim(); if (!v) return;
+    attachSkillToMember(memberNode, v);
+    closeAddSheet();
+  });
+  document.getElementById("btnAsBack").onclick = () => openAddSheet(memberNode);
+  document.getElementById("btnAsGoSettings").onclick = () => { closeAddSheet(); closePanel(); switchTab("settings"); };
+}
+
+document.getElementById("btnAddNode").addEventListener("click", () => openAddSheet());
+document.getElementById("btnSaveGraph").addEventListener("click", async () => {
+  try { await api("/api/graph", "POST", graph()); status("Graph saved — config updated from the graph.", "ok"); await loadState(); }
+  catch (e) { status("Save failed: " + e.message, "err"); }
+});
+// ---------- graph viewport: pan + zoom inside the box, no scrollbars ----------
+let panX = 0, panY = 0, pinchActive = false;
+const ZOOM_MIN = 0.25, ZOOM_MAX = 2;
+function viewEl() { return document.getElementById("canvasViewport"); }
+function applyView() {
+  document.getElementById("canvas").style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  const label = Math.round(zoom * 100) + "%";
+  document.getElementById("btnZoomLabel").textContent = label;
+  const lm = document.getElementById("btnZoomLabelM");
+  if (lm) lm.textContent = label;
+}
+// World coordinates of a point given in viewport-relative pixels.
+function viewPointAt(vx, vy) { return { x: (vx - panX) / zoom, y: (vy - panY) / zoom }; }
+function viewCenterWorld() {
+  const r = viewEl().getBoundingClientRect();
+  return viewPointAt(r.width / 2, r.height / 2);
+}
+// Zoom, keeping the world point under viewport point (cx, cy) fixed.
+// Without a point, zooms around the centre of the visible box.
+function setZoom(z, cx, cy) {
+  const nz = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  if (cx === undefined || cy === undefined) {
+    const r = viewEl().getBoundingClientRect();
+    cx = r.width / 2; cy = r.height / 2;
+  }
+  const w = viewPointAt(cx, cy);
+  zoom = nz;
+  panX = cx - w.x * zoom; panY = cy - w.y * zoom;
+  applyView();
+}
+function fitGraph() {
+  const nodes = graph().nodes; if (!nodes.length) return;
+  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+  for (const n of nodes) {
+    const w = NODE_W[n.type] || 180, h = nodeH[n.id] || 64;
+    minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + w); maxY = Math.max(maxY, n.y + h);
+  }
+  const vp = viewEl();
+  const z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, (vp.clientWidth - 24) / (maxX - minX), (vp.clientHeight - 24) / (maxY - minY)));
+  zoom = z;
+  panX = (vp.clientWidth - (maxX - minX) * z) / 2 - minX * z;
+  panY = (vp.clientHeight - (maxY - minY) * z) / 2 - minY * z;
+  applyView();
+}
+
+// Wheel zoom (cursor-centred) + drag-to-pan + pinch zoom, all inside the box.
+(function () {
+  const vp = viewEl();
+  const pointers = new Map(); // pointerId -> {x, y} in client coords
+  let pinch = null; // {d0, z0, mx0, my0, px0, py0} while two fingers are down
+  let panStart = null;
+  vp.addEventListener("wheel", ev => {
+    ev.preventDefault();
+    const dy = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY;
+    const r = vp.getBoundingClientRect();
+    setZoom(zoom * Math.exp(-dy * 0.0012), ev.clientX - r.left, ev.clientY - r.top);
+  }, { passive: false });
+  vp.addEventListener("pointerdown", ev => {
+    if (ev.target.closest(".node, .port, button, a, input, select, textarea, #graphEmptyCard")) return;
+    if (ev.pointerType === "mouse" && ev.button !== undefined && ev.button !== 0) return;
+    try { vp.setPointerCapture(ev.pointerId); } catch (e) { /* pointer already gone */ }
+    pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y), z0: zoom,
+        mx0: (a.x + b.x) / 2, my0: (a.y + b.y) / 2, px0: panX, py0: panY };
+      pinchActive = true;
+      panStart = null;
+    } else if (pointers.size === 1) {
+      panStart = { x: ev.clientX, y: ev.clientY, px: panX, py: panY, moved: false };
+    }
+  });
+  vp.addEventListener("pointermove", ev => {
+    if (!pointers.has(ev.pointerId)) return;
+    pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pinch && pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d < 8) return;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const r = vp.getBoundingClientRect();
+      // Keep the world point under the pinch midpoint fixed at the
+      // midpoint's current position: zoom + pan in one step.
+      const wx = (pinch.mx0 - r.left - pinch.px0) / pinch.z0;
+      const wy = (pinch.my0 - r.top - pinch.py0) / pinch.z0;
+      zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinch.z0 * (d / pinch.d0)));
+      panX = (mx - r.left) - wx * zoom;
+      panY = (my - r.top) - wy * zoom;
+      applyView();
+      return;
+    }
+    if (panStart && pointers.size === 1) {
+      const dx = ev.clientX - panStart.x, dy = ev.clientY - panStart.y;
+      if (!panStart.moved && Math.hypot(dx, dy) < 4) return;
+      panStart.moved = true;
+      panX = panStart.px + dx; panY = panStart.py + dy;
+      applyView();
+    }
+  });
+  const endPointer = ev => {
+    pointers.delete(ev.pointerId);
+    if (pointers.size < 2) { pinch = null; pinchActive = false; }
+    if (pointers.size === 1 && panStart === null) {
+      // One finger left after a pinch: let it keep panning from here.
+      const p = [...pointers.values()][0];
+      panStart = { x: p.x, y: p.y, px: panX, py: panY, moved: false };
+    } else if (pointers.size === 0) {
+      panStart = null;
+    }
+  };
+  vp.addEventListener("pointerup", endPointer);
+  vp.addEventListener("pointercancel", endPointer);
+})();
+document.getElementById("btnZoomOut").addEventListener("click", () => setZoom(zoom * 0.85));
+document.getElementById("btnZoomIn").addEventListener("click", () => setZoom(zoom * 1.18));
+document.getElementById("btnZoomLabel").addEventListener("click", () => setZoom(1));
+document.getElementById("btnFit").addEventListener("click", fitGraph);
+function closePanel() {
+  selected = null; renderGraph(); renderNodeForm();
+  document.getElementById("sidePanel").classList.remove("open");
+  document.getElementById("sheetScrim").classList.remove("open");
+  document.body.classList.remove("sheet-lock");
+}
+function openSheet() {
+  if (window.innerWidth > 820) return;
+  document.getElementById("sidePanel").classList.add("open");
+  document.getElementById("sheetScrim").classList.add("open");
+  document.body.classList.add("sheet-lock");
+}
+async function deleteSelected() {
+  if (!selected) return;
+  if (selected.startsWith("e-")) {
+    graph().edges = graph().edges.filter(e => e.id !== selected);
+    selected = null; setDirty(true); renderGraph(); renderNodeForm();
+    document.getElementById("sidePanel").classList.remove("open");
+    status("Edge deleted \u2014 press Save graph to persist.", "ok");
+    return;
+  }
+  const n = nodeById(selected); if (!n) return;
+  const teamCfg = n.type === "team" ? S.config.teams[n.label] : null;
+  const memberId = n.type === "member" ? n.id.split(":").pop() : null;
+  const memberTeam = n.type === "member" ? (n.data.team || (n.id.split(":").length === 3 ? n.id.split(":")[1] : null)) : null;
+  const memberCfg = memberTeam && S.config.teams[memberTeam] ? S.config.teams[memberTeam].members.find(m => m.id === memberId) : null;
+  if (teamCfg || memberCfg) {
+    const what = n.type === "team" ? `team "${n.label}"` : `member "${memberId}" of team "${memberTeam}"`;
+    if (!confirm(`Delete ${what} from the config? This cannot be undone.`)) return;
+    try {
+      if (n.type === "team") await api("/api/teams/" + encodeURIComponent(n.label), "DELETE");
+      else await api(`/api/teams/${encodeURIComponent(memberTeam)}/members/${encodeURIComponent(memberId)}`, "DELETE");
+      selected = null; await loadState(); status("Deleted.", "ok");
+    } catch (err) { status("Delete failed: " + err.message, "err"); }
+    return;
+  }
+  graph().nodes = graph().nodes.filter(x => x.id !== n.id);
+  graph().edges = graph().edges.filter(e => e.from !== n.id && e.to !== n.id);
+  selected = null; setDirty(true); renderGraph(); renderNodeForm();
+  document.getElementById("sidePanel").classList.remove("open");
+  status("Deleted locally \u2014 press Save graph to persist.", "ok");
+}
+function syncToolEdges(memberNode, toolsets) {
+  const want = new Set(toolsets);
+  memberNode.data.toolsets = [...want];
+  graph().edges = graph().edges.filter(e => !(e.from === memberNode.id && e.kind === "uses_tool"));
+  let k = 0;
+  for (const t of want) {
+    let tn = graph().nodes.find(x => x.type === "tool" && (x.data.toolset === t || x.label === t));
+    if (!tn) {
+      tn = { id: "tool:" + t, type: "tool", label: t, x: memberNode.x + 260, y: memberNode.y + k * 76, data: { toolset: t } };
+      graph().nodes.push(tn);
+    }
+    graph().edges.push({ id: "e-" + Date.now().toString(36) + "-" + (k++), from: memberNode.id, to: tn.id, kind: "uses_tool" });
+  }
+  setDirty(true); renderGraph();
+}
+function syncCharterEdge(memberNode, filePath) {
+  graph().edges = graph().edges.filter(e => !(e.from === memberNode.id && e.kind === "has_charter"));
+  if (filePath) {
+    let f = graph().nodes.find(x => x.type === "file" && (x.data.path === filePath || x.label === filePath));
+    if (!f) {
+      f = { id: "file:" + filePath, type: "file", label: filePath, x: memberNode.x + 260, y: memberNode.y, data: { path: filePath } };
+      graph().nodes.push(f);
+    }
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from: memberNode.id, to: f.id, kind: "has_charter" });
+  }
+  setDirty(true); renderGraph();
+}
+function syncModelEdge(memberNode, modelNodeId) {
+  graph().edges = graph().edges.filter(e => !(e.from === memberNode.id && e.kind === "uses_model"));
+  const m = nodeById(modelNodeId);
+  if (m) {
+    memberNode.data.provider = m.data.provider; memberNode.data.model = m.data.model;
+    graph().edges.push({ id: "e-" + Date.now().toString(36), from: memberNode.id, to: m.id, kind: "uses_model" });
+  }
+  setDirty(true); renderGraph();
+}
+function renderNodeForm() {
+  const box = document.getElementById("nodeForm");
+  const panelType = document.getElementById("panelType");
+  const panelTitle = document.getElementById("panelTitle");
+  if (!selected) {
+    panelType.textContent = "Inspector"; panelTitle.textContent = "Nothing selected";
+    box.innerHTML = "Select a node or an edge on the graph to inspect it.";
+    return;
+  }
+  const edge = graph().edges.find(e => e.id === selected);
+  if (edge) {
+    const fromN = nodeById(edge.from), toN = nodeById(edge.to);
+    panelType.textContent = "Edge"; panelTitle.textContent = EDGE_STYLE[edge.kind] ? EDGE_STYLE[edge.kind].label : edge.kind;
+    box.innerHTML = `<div class="actions" style="margin-top:0"><button class="ghost small" id="btnCloseNode">\u00d7 Close</button></div>
+    <p>${esc(fromN ? fromN.label : edge.from)} \u2192 ${esc(toN ? toN.label : edge.to)}</p><label>Kind</label>
+    <select id="edgeKindEdit">${Object.keys(EDGE_STYLE).map(k => `<option value="${k}" ${k === edge.kind ? "selected" : ""}>${EDGE_STYLE[k].label}</option>`).join("")}</select>
+    <div class="actions"><button id="btnDeleteNode" class="danger">Delete edge</button></div>`;
+    document.getElementById("edgeKindEdit").addEventListener("change", ev => { edge.kind = ev.target.value; setDirty(true); drawEdges(); });
+    document.getElementById("btnCloseNode").onclick = closePanel;
+    document.getElementById("btnDeleteNode").onclick = deleteSelected;
+    return;
+  }
+  const n = nodeById(selected); if (!n) { box.innerHTML = "Node gone."; return; }
+  const d = n.data || {};
+  panelType.textContent = human(n.type); panelTitle.textContent = n.label;
+  const files = S.files.filter(f => f.type === "file").map(f => f.path);
+  let html = field("nfLabel", "Label", n.label);
+  if (n.type === "main_brain" || n.type === "model") {
+    html += `<label>Provider</label><select id="nfProvider">${S.providers.map(p => `<option value="${p.provider}" ${p.provider === d.provider ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`
+      + field("nfModel", "Model", d.model) + field("nfEndpoint", "Endpoint / base_url", d.endpoint || "")
+      + field("nfAuth", "Auth ref", d.auth_ref || "none") + numField("nfCost", "Cost per M tokens (USD)", d.cost_per_mtok_usd)
+      + field("nfCaps", "Capabilities (comma-separated)", (d.capabilities || []).join(", "));
+  }
+  if (n.type === "main_brain") {
+    html += `<div class="actions"><button type="button" id="btnMbAdd" class="ghost">+ Add team or model…</button></div>`;
+  }
+  if (n.type === "member") {
+    const modelNodes = graph().nodes.filter(x => x.type === "model");
+    const curModelEdge = graph().edges.find(e => e.from === n.id && e.kind === "uses_model");
+    const curModelId = curModelEdge ? curModelEdge.to : (modelNodes.find(m => m.data.provider === d.provider && m.data.model === d.model) || {}).id || "";
+    html += field("nfRole", "Role", d.role)
+      + `<label>Model (shared node)</label><select id="nfModelSel"><option value="">\u2014 none \u2014</option>${modelNodes.map(m => `<option value="${m.id}" ${m.id === curModelId ? "selected" : ""}>${esc((m.data.provider || "") + "/" + (m.data.model || ""))}</option>`).join("")}</select>`
+      + `<label>Charter file</label><select id="nfCharter"><option value="">\u2014 none \u2014</option>${files.map(f => `<option value="${esc(f)}" ${f === d.charter_file ? "selected" : ""}>${esc(f)}</option>`).join("")}</select>`
+      + `<p class="muted small">Changing the charter rewires the has_charter edge \u2014 the charter is injected into this member's prompt on the next run.</p>`
+      + `<label>Toolsets</label>` + S.toolsets.map(t => `<span class="check"><input type="checkbox" class="nfTool" value="${t}" ${(d.toolsets || []).includes(t) ? "checked" : ""}> ${t}</span>`).join("")
+      + field("nfCaps", "Capabilities (comma-separated)", (d.capabilities || []).join(", "))
+      + numField("nfCost", "Cost per M tokens (USD)", d.cost_per_mtok_usd)
+      + numField("nfCtx", "Context limit (tokens)", d.context_limit)
+      + `<label>Approval</label><select id="nfApproval">${["smart", "approve", "off"].map(a => `<option value="${a}" ${a === (d.approval || "smart") ? "selected" : ""}>${human(a)}</option>`).join("")}</select>`
+      + `<div class="actions"><button type="button" id="btnMemberAttach" class="gold">+ Attach to member…</button></div>`;
+  }
+  if (n.type === "team") {
+    const teamCfg = S.config.teams[n.label];
+    const cfgMembers = teamCfg ? teamCfg.members : [];
+    const edgeMembers = graph().edges.filter(e => e.from === n.id && e.kind === "has_member").map(e => nodeById(e.to)).filter(Boolean);
+    const leadOpts = cfgMembers.map(m => ({ id: m.id, label: m.id }));
+    for (const em of edgeMembers) { const mid = em.id.split(":").pop(); if (!leadOpts.some(o => o.id === mid)) leadOpts.push({ id: mid, label: mid }); }
+    const leadVal = d.lead_member || (teamCfg ? teamCfg.lead_member : "") || "";
+    html += field("nfTemplate", "Template", d.template) + field("nfGoal", "Goal", d.goal)
+      + numField("nfBudget", "Budget (USD)", (d.team_budget && d.team_budget.usd) ?? (teamCfg && teamCfg.team_budget ? teamCfg.team_budget.usd : 5))
+      + `<label>Team brain mode</label><select id="nfBrainMode">${["lead_member", "separate"].map(v => `<option value="${v}" ${v === (d.team_brain_mode || (teamCfg ? teamCfg.team_brain_mode : "lead_member")) ? "selected" : ""}>${human(v)}</option>`).join("")}</select>`
+      + `<label>Lead member</label><select id="nfLead"><option value="">\u2014 none \u2014</option>${leadOpts.map(o => `<option value="${o.id}" ${o.id === leadVal ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`
+      + `<div class="actions"><button type="button" id="btnTeamAddMember" class="gold">+ Add member to this team</button></div>`;
+  }
+  if (n.type === "file" || n.type === "folder") html += field("nfPath", "Path (under files/)", d.path || n.label);
+  if (n.type === "file") html += `<div class="actions"><button id="btnOpenInFiles" class="ghost">Open in Files tab</button></div>`;
+  if (n.type === "tool") html += field("nfToolset", "Toolset name", d.toolset || n.label);
+  if (n.type === "skill") html += field("nfSkillPath", "Skill file (under files/)", d.path || n.label);
+  const conns = graph().edges.filter(e => e.from === n.id || e.to === n.id);
+  html += `<h3>Connections (${conns.length})</h3>` + (conns.length ? conns.map(e => {
+    const other = e.from === n.id ? nodeById(e.to) : nodeById(e.from);
+    const dir = e.from === n.id ? "\u2192" : "\u2190";
+    return `<div class="conn-row"><span>${dir} ${esc(other ? other.label : (e.from === n.id ? e.to : e.from))} <span class="muted small">\u00b7 ${esc(EDGE_STYLE[e.kind] ? EDGE_STYLE[e.kind].label : e.kind)}</span></span><button class="ghost small" data-disconnect="${e.id}" title="Remove this connection">\u00d7</button></div>`;
+  }).join("") : `<p class="muted small">No connections yet \u2014 switch to Connect mode to link this node.</p>`);
+  html += `<div class="actions"><button id="btnDeleteNode" class="danger">Delete node</button></div>
+    <p class="muted small">Changes apply instantly. Press \u201cSave graph\u201d to persist them \u2014 model and charter changes are written back to airlangga.yaml.</p>`;
+  box.innerHTML = html;
+  document.getElementById("btnDeleteNode").onclick = deleteSelected;
+  const openBtn = document.getElementById("btnOpenInFiles");
+  if (openBtn) openBtn.onclick = () => { switchTab("files"); openFile(d.path || n.label); };
+  box.querySelectorAll("[data-disconnect]").forEach(b => b.addEventListener("click", () => {
+    graph().edges = graph().edges.filter(e => e.id !== b.dataset.disconnect);
+    setDirty(true); renderGraph(); renderNodeForm();
+  }));
+  const apply = () => {
+    n.label = document.getElementById("nfLabel").value;
+    if (n.type === "main_brain" || n.type === "model") {
+      const preset = S.providers.find(p => p.provider === document.getElementById("nfProvider").value) || {};
+      if (preset.provider) { d.provider = preset.provider; d.wire_format = preset.wire_format; }
+      d.model = document.getElementById("nfModel").value;
+      d.endpoint = document.getElementById("nfEndpoint").value || preset.endpoint || null;
+      d.auth_ref = document.getElementById("nfAuth").value || preset.auth_ref;
+      d.cost_per_mtok_usd = parseFloat(document.getElementById("nfCost").value || "0");
+      d.capabilities = document.getElementById("nfCaps").value.split(",").map(s => s.trim()).filter(Boolean);
+    }
+    if (n.type === "member") {
+      d.role = document.getElementById("nfRole").value;
+      d.charter_file = document.getElementById("nfCharter").value || null;
+      d.toolsets = [...document.querySelectorAll(".nfTool:checked")].map(x => x.value);
+      d.capabilities = document.getElementById("nfCaps").value.split(",").map(s => s.trim()).filter(Boolean);
+      d.cost_per_mtok_usd = parseFloat(document.getElementById("nfCost").value || "0");
+      const ctx = parseInt(document.getElementById("nfCtx").value || "0", 10);
+      d.context_limit = ctx > 0 ? ctx : null;
+      d.approval = document.getElementById("nfApproval").value;
+    }
+    if (n.type === "team") {
+      d.template = document.getElementById("nfTemplate").value; d.goal = document.getElementById("nfGoal").value;
+      d.team_budget = { usd: parseFloat(document.getElementById("nfBudget").value || "0") || null };
+      d.team_brain_mode = document.getElementById("nfBrainMode").value;
+      d.lead_member = document.getElementById("nfLead").value || null;
+    }
+    if (n.type === "file" || n.type === "folder") d.path = document.getElementById("nfPath").value;
+    if (n.type === "tool") d.toolset = document.getElementById("nfToolset").value;
+    if (n.type === "skill") d.path = document.getElementById("nfSkillPath").value;
+    panelTitle.textContent = n.label;
+    const div = nodeEls[n.id];
+    if (div) {
+      const detail = (n.type === "model" || n.type === "main_brain") ? `${d.provider || ""}/${d.model || ""}`
+        : n.type === "member" ? (d.role || "") + (d.charter_file ? " \u00b7 " + d.charter_file : "")
+        : n.type === "team" ? (d.template || "") : (d.path || d.provider || "");
+      div.querySelector(".l").textContent = n.label;
+      div.querySelector(".d").textContent = detail;
+      nodeH[n.id] = div.offsetHeight || 64;
+      updateEdgesFor(n.id);
+    }
+    setDirty(true);
+  };
+  box.querySelectorAll("input, select").forEach(el => el.addEventListener(el.tagName === "SELECT" ? "change" : "input", apply));
+  const charterSel = document.getElementById("nfCharter");
+  if (charterSel) charterSel.addEventListener("change", () => { syncCharterEdge(n, charterSel.value); renderNodeForm(); });
+  const modelSel = document.getElementById("nfModelSel");
+  if (modelSel) modelSel.addEventListener("change", () => { syncModelEdge(n, modelSel.value); renderNodeForm(); });
+  const memberAttachBtn = document.getElementById("btnMemberAttach");
+  if (memberAttachBtn) memberAttachBtn.onclick = () => openAddSheet(n);
+  const teamAddBtn = document.getElementById("btnTeamAddMember");
+  if (teamAddBtn) teamAddBtn.onclick = () => createGraphNode("member", n);
+  const mbAddBtn = document.getElementById("btnMbAdd");
+  if (mbAddBtn) mbAddBtn.onclick = () => openAddSheet(n);
+  box.querySelectorAll(".nfTool").forEach(cb => cb.addEventListener("change", () => {
+    syncToolEdges(n, [...document.querySelectorAll(".nfTool:checked")].map(x => x.value));
+  }));
+}
+
+// ---------- teams ----------
+function renderTeams() {
+  const box = document.getElementById("teamsList");
+  const teams = S.config.teams;
+  box.innerHTML = Object.entries(teams).map(([name, t]) => {
+    const budget = t.team_budget && t.team_budget.usd != null ? "$" + Number(t.team_budget.usd).toFixed(2) : "\u2014";
+    const lead = t.lead_member ? `<span class="pill gold">LEAD ${esc(t.lead_member)}</span>` : "";
+    return `
+    <div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <h2 style="margin:0">${esc(name)}</h2>
+      <span class="pill">${esc(t.template)}</span> <span class="pill">${esc(human(t.team_brain_mode))}</span> ${lead}
+      <span class="pill">Budget ${budget}</span> <span class="pill">${t.members.length} member${t.members.length === 1 ? "" : "s"}</span>
+      <span style="flex:1"></span>
+      <button class="ghost small" onclick="runTeamQuick('${esc(name)}')">Run team \u2192</button>
+      <button class="small" onclick="showMemberForm('${esc(name)}')">+ Add member</button>
+      <button class="ghost small" onclick="editTeamForm('${esc(name)}')">Edit</button>
+      <button class="danger small" onclick="delTeam('${esc(name)}')">Delete</button></div>
+    <p class="muted small" style="margin:8px 0 0">${esc(t.goal || "")}</p>
+    <div id="teamEdit-${esc(name)}" style="margin-top:10px"></div>
+    <div class="table-wrap stacked" style="margin-top:10px"><table><thead><tr><th>Member</th><th>Role</th><th>Model</th><th>Tools</th><th>Charter</th><th class="num">Budget</th><th></th></tr></thead>
+    <tbody>${t.members.map(m => `<tr><td data-label="Member"><b>${esc(m.id)}</b>${t.lead_member === m.id ? ' <span class="pill gold">LEAD</span>' : ""}</td><td data-label="Role">${esc(m.role)}</td>
+      <td data-label="Model" class="mono">${esc(m.provider)}/${esc(m.model)}</td>
+      <td data-label="Tools">${(m.toolsets || []).map(x => `<span class="tag">${esc(x)}</span>`).join("") || "\u2014"}</td>
+      <td data-label="Charter" class="mono">${m.charter_file ? `<button class="ghost small" data-charter="${esc(m.charter_file)}" onclick="openCharterFile(this)">${esc(m.charter_file)}</button>` : "\u2014"}</td>
+      <td data-label="Budget" class="num">${m.budget && m.budget.usd != null ? "$" + Number(m.budget.usd).toFixed(2) : "\u2014"}</td>
+      <td data-label=""><button class="ghost small" onclick="editMember('${esc(name)}','${esc(m.id)}')">Edit</button>
+      <button class="danger small" onclick="delMember('${esc(name)}','${esc(m.id)}')">Remove</button></td></tr>`).join("")}</tbody></table></div>
+    </div>`;
+  }).join("")
+    || `<div class="card muted">No teams yet \u2014 create one above.</div>`;
+}
+window.openCharterFile = el => {
+  const p = el.dataset.charter; if (!p) return;
+  switchTab("files"); openFile(p);
+};
+window.runTeamQuick = team => {
+  switchTab("runs");
+  const sel = document.getElementById("runTeam");
+  if ([...sel.options].some(o => o.value === team)) sel.value = team;
+  document.getElementById("runGoal").focus();
+};
+window.editTeamForm = name => {
+  const t = S.config.teams[name];
+  const box = document.getElementById("teamEdit-" + name);
+  box.innerHTML = `<div class="row">
+    <div><label>Goal</label><input id="etGoal" value="${esc(t.goal || "")}"></div>
+    <div><label>Template</label><select id="etTemplate">${["research", "code-review", "content", "blank"].map(x => `<option ${x === t.template ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+    <div><label>Team brain mode</label><select id="etMode"><option value="lead_member" ${t.team_brain_mode === "lead_member" ? "selected" : ""}>lead member</option><option value="separate" ${t.team_brain_mode === "separate" ? "selected" : ""}>separate</option></select></div>
+    <div><label>Team budget (USD)</label><input id="etBudget" type="number" step="0.5" min="0" value="${t.team_budget && t.team_budget.usd != null ? t.team_budget.usd : ""}"></div>
+    <div><label>Lead member</label><select id="etLead"><option value="">\u2014 none \u2014</option>${t.members.map(m => `<option value="${esc(m.id)}" ${m.id === t.lead_member ? "selected" : ""}>${esc(m.id)}</option>`).join("")}</select></div>
+  </div><div class="actions"><button class="gold" id="btnEtSave">Save team</button><button class="ghost" id="btnEtCancel">Cancel</button></div>`;
+  document.getElementById("btnEtCancel").onclick = () => { box.innerHTML = ""; };
+  document.getElementById("btnEtSave").onclick = async () => {
+    try {
+      await api("/api/teams/" + encodeURIComponent(name), "PUT", {
+        goal: document.getElementById("etGoal").value,
+        template: document.getElementById("etTemplate").value,
+        team_brain_mode: document.getElementById("etMode").value,
+        team_budget: { usd: parseFloat(document.getElementById("etBudget").value || "0") || null },
+        lead_member: document.getElementById("etLead").value || null });
+      status("Team saved.", "ok"); await loadState();
+    } catch (e) { status("Save failed: " + e.message, "err"); }
+  };
+};
+function looksLikeRawKey(v) {
+  return /^(sk-[A-Za-z0-9]|sk-ant-|ghp_|gho_|github_pat_|xox[baprs]-|AIza|-----BEGIN [A-Z ]*PRIVATE KEY)/.test(v || "");
+}
+function memberFormHtml(team, m) {
+  m = m || { id: "", role: "researcher", provider: "mock", model: "mock", endpoint: "", auth_ref: "none",
+    wire_format: "mock", capabilities: ["tool_calling", "structured_json"], context_limit: 128000,
+    cost_per_mtok_usd: 0, toolsets: ["web"], skills: [], budget: { usd: 5 }, approval: "smart",
+    charter_file: "", attached_files: [], fallback: [],
+    routing_policy: { require: [], prefer: "cheapest_above_quality_floor" } };
+  const files = S.files.filter(f => f.type === "file").map(f => f.path);
+  const preset = S.providers.find(p => p.provider === m.provider) || S.providers[0];
+  const ALL_CAPS = [...new Set([...S.providers.flatMap(p => p.capabilities || []), ...(m.capabilities || []), "tool_calling", "structured_json"])];
+  const others = (S.config.teams[team] ? S.config.teams[team].members : []).filter(x => x.id !== m.id);
+  const fbIds = new Set((m.fallback || []).map(f => f.provider + "/" + f.model));
+  const rp = m.routing_policy || { require: [], prefer: "cheapest_above_quality_floor" };
+  const capChecks = caps => ALL_CAPS.map(c => `<span class="check"><input type="checkbox" class="${caps}" value="${c}" ${(m.capabilities || []).includes(c) && caps === "mfCap" ? "checked" : ""}${(rp.require || []).includes(c) && caps === "mfReqCap" ? "checked" : ""}> ${c}</span>`).join("");
+  return `<h3>Identity</h3><div class="row">
+    <div><label>ID</label><input id="mfId" value="${esc(m.id)}" ${m.id ? "disabled" : ""}></div>
+    <div><label>Role</label><input id="mfRole" value="${esc(m.role)}"></div>
+  </div>
+  <h3>Model &amp; cost</h3><div class="row">
+    <div><label>Provider</label><select id="mfProvider">${S.providers.map(p => `<option value="${p.provider}" ${p.provider === m.provider ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select></div>
+    <div><label>Model</label><input id="mfModel" list="mfModelList" value="${esc(m.model)}"><datalist id="mfModelList">${(preset.models || []).map(x => `<option value="${esc(x)}">`).join("")}</datalist></div>
+    <div><label>Endpoint / base_url</label><input id="mfEndpoint" value="${esc(m.endpoint || "")}"></div>
+    <div><label>Auth ref</label><input id="mfAuth" value="${esc(m.auth_ref)}"><p id="mfAuthWarn" class="field-err" style="display:none">Do not paste raw API keys here \u2014 use env:VAR_NAME.</p></div>
+    <div><label>Budget USD</label><input id="mfBudget" type="number" step="0.5" value="${m.budget && m.budget.usd != null ? m.budget.usd : ""}"></div>
+    <div><label>Cost per M tokens (USD)</label><input id="mfCost" type="number" step="0.01" min="0" value="${m.cost_per_mtok_usd || 0}"></div>
+    <div><label>Context limit (tokens)</label><input id="mfCtx" type="number" step="1000" min="0" value="${m.context_limit || 128000}"></div>
+    <div><label>Approval</label><select id="mfApproval"><option ${m.approval === "smart" ? "selected" : ""}>smart</option><option ${m.approval === "approve" ? "selected" : ""}>approve</option><option ${m.approval === "off" ? "selected" : ""}>off</option></select></div>
+  </div>
+  <label>Capabilities</label><div>${capChecks("mfCap")}</div>
+  <h3>Wiring</h3>
+    <div><label>Charter file</label><select id="mfCharter"><option value="">\u2014 none \u2014</option>${files.map(f => `<option ${f === m.charter_file ? "selected" : ""}>${f}</option>`).join("")}</select></div>
+    <label>Attached files</label><div>${files.map(f => `<span class="check"><input type="checkbox" class="mfAttached" value="${esc(f)}" ${(m.attached_files || []).includes(f) ? "checked" : ""}> ${esc(f)}</span>`).join("") || '<span class="muted small">No files yet \u2014 create one in the Files tab.</span>'}</div>
+    <label>Toolsets</label><div>${S.toolsets.map(t => `<span class="check"><input type="checkbox" class="mfTool" value="${t}" ${(m.toolsets || []).includes(t) ? "checked" : ""}> ${t}</span>`).join("")}</div>
+    <div><label>Skills (comma-separated names)</label><input id="mfSkills" value="${esc((m.skills || []).join(", "))}" placeholder="research, fact-check"></div>
+    <div><label>Routing \u2014 required capabilities</label><div>${capChecks("mfReqCap")}</div></div>
+    <div><label>Routing \u2014 prefer</label><input id="mfRoutingPrefer" value="${esc(rp.prefer || "cheapest_above_quality_floor")}"></div>
+  <h3>Fallback chain</h3>
+  <p class="muted small">If this member's model cannot run a call, the runtime tries the checked fallbacks in order. A fallback is skipped when it lacks a capability this member needs.</p>
+  <div id="fbList">${others.length ? others.map(o => `<div class="conn-row"><span class="check"><input type="checkbox" class="mfFb" value="${esc(o.id)}" data-caps="${esc((o.capabilities || []).join(","))}" ${fbIds.has(o.provider + "/" + o.model) ? "checked" : ""}> <b>${esc(o.id)}</b> <span class="muted small">${esc(o.provider)}/${esc(o.model)}</span></span><span class="fb-pill"></span></div>`).join("") : '<p class="muted small">No other members in this team yet.</p>'}</div>
+  <div class="actions"><button class="gold" onclick="saveMember('${esc(team)}', ${m.id ? "true" : "false"})">Save member</button>
+  <button class="ghost" onclick="closeMemberModal()">Cancel</button></div>`;
+}
+window.refreshFallbackPills = () => {
+  const need = [...document.querySelectorAll(".mfCap:checked")].map(x => x.value);
+  document.querySelectorAll("#fbList .mfFb").forEach(cb => {
+    const pill = cb.closest(".conn-row").querySelector(".fb-pill");
+    if (!pill) return;
+    const caps = (cb.dataset.caps || "").split(",").filter(Boolean);
+    const missing = need.filter(c => !caps.includes(c));
+    pill.innerHTML = missing.length
+      ? `<span class="pill warn">WILL SKIP \u2014 missing ${esc(missing.join(", "))}</span>`
+      : `<span class="pill ok">ELIGIBLE</span>`;
+  });
+};
+function openMemberModal(team, m) {
+  document.getElementById("memberModalTitle").textContent = m ? `Edit member \u2014 ${m.id} (${team})` : `Add member \u2014 ${team}`;
+  document.getElementById("memberFormWrap").innerHTML = memberFormHtml(team, m);
+  document.getElementById("memberModal").classList.add("open");
+  // Provider presets auto-fill endpoint/auth + model suggestions.
+  document.getElementById("mfProvider").addEventListener("change", ev => {
+    const preset = S.providers.find(p => p.provider === ev.target.value); if (!preset) return;
+    document.getElementById("mfEndpoint").value = preset.endpoint || "";
+    document.getElementById("mfAuth").value = preset.auth_ref || "none";
+    document.getElementById("mfModelList").innerHTML = (preset.models || []).map(x => `<option value="${esc(x)}">`).join("");
+    if (preset.models && preset.models.length) document.getElementById("mfModel").value = preset.models[0];
+  });
+  document.getElementById("mfAuth").addEventListener("input", ev => {
+    document.getElementById("mfAuthWarn").style.display = looksLikeRawKey(ev.target.value) ? "" : "none";
+  });
+  document.querySelectorAll(".mfCap").forEach(cb => cb.addEventListener("change", window.refreshFallbackPills));
+  window.refreshFallbackPills();
+}
+window.closeMemberModal = () => document.getElementById("memberModal").classList.remove("open");
+document.getElementById("memberModal").addEventListener("click", ev => { if (ev.target.id === "memberModal") closeMemberModal(); });
+window.showMemberForm = team => openMemberModal(team, null);
+window.editMember = (team, id) => {
+  const m = S.config.teams[team].members.find(x => x.id === id);
+  openMemberModal(team, m);
+};
+window.saveMember = async (team, isEdit) => {
+  const authVal = document.getElementById("mfAuth").value.trim();
+  if (looksLikeRawKey(authVal)) { status("Do not paste raw API keys here \u2014 use env:VAR_NAME.", "err"); return; }
+  const preset = S.providers.find(p => p.provider === document.getElementById("mfProvider").value) || S.providers[0];
+  const teamMembers = ((S.config.teams[team] || {}).members || []);
+  const fallback = [...document.querySelectorAll(".mfFb:checked")].map(cb => {
+    const c = teamMembers.find(x => x.id === cb.value);
+    return { provider: c.provider, model: c.model, endpoint: c.endpoint || null, auth_ref: c.auth_ref,
+      wire_format: c.wire_format, capabilities: c.capabilities || [], context_limit: c.context_limit,
+      cost_per_mtok_usd: c.cost_per_mtok_usd || 0 };
+  });
+  const body = {
+    id: document.getElementById("mfId").value.trim(),
+    role: document.getElementById("mfRole").value.trim(),
+    provider: preset.provider, model: document.getElementById("mfModel").value.trim(),
+    endpoint: document.getElementById("mfEndpoint").value.trim() || preset.endpoint || null,
+    auth_ref: authVal || preset.auth_ref,
+    wire_format: preset.wire_format,
+    capabilities: [...document.querySelectorAll(".mfCap:checked")].map(x => x.value),
+    context_limit: parseInt(document.getElementById("mfCtx").value || "128000", 10),
+    cost_per_mtok_usd: parseFloat(document.getElementById("mfCost").value || "0") || 0,
+    toolsets: [...document.querySelectorAll(".mfTool:checked")].map(x => x.value),
+    skills: document.getElementById("mfSkills").value.split(",").map(s => s.trim()).filter(Boolean),
+    attached_files: [...document.querySelectorAll(".mfAttached:checked")].map(x => x.value),
+    budget: { usd: parseFloat(document.getElementById("mfBudget").value || "0") || null },
+    approval: document.getElementById("mfApproval").value,
+    charter_file: document.getElementById("mfCharter").value || null,
+    fallback,
+    routing_policy: {
+      require: [...document.querySelectorAll(".mfReqCap:checked")].map(x => x.value),
+      prefer: document.getElementById("mfRoutingPrefer").value.trim() || "cheapest_above_quality_floor" },
+  };
+  if (!body.id) { status("Member ID is required.", "err"); return; }
+  try {
+    if (isEdit) await api(`/api/teams/${encodeURIComponent(team)}/members/${encodeURIComponent(body.id)}`, "PUT", body);
+    else await api(`/api/teams/${encodeURIComponent(team)}/members`, "POST", body);
+    closeMemberModal(); status("Member saved.", "ok"); await loadState();
+  } catch (e) { status("Save failed: " + e.message, "err"); }
+};
+window.delMember = async (team, id) => {
+  if (!confirm("Delete member " + id + "?")) return;
+  try { await api(`/api/teams/${encodeURIComponent(team)}/members/${encodeURIComponent(id)}`, "DELETE"); status("Member deleted.", "ok"); await loadState(); }
+  catch (e) { status("Delete failed: " + e.message, "err"); }
+};
+window.delTeam = async name => {
+  if (!confirm("Delete team " + name + " and all its members?")) return;
+  try { await api("/api/teams/" + encodeURIComponent(name), "DELETE"); status("Team deleted.", "ok"); await loadState(); }
+  catch (e) { status("Delete failed: " + e.message, "err"); }
+};
+document.getElementById("btnNewTeam").addEventListener("click", () => {
+  const card = document.getElementById("createTeamCard");
+  card.style.display = card.style.display === "none" ? "" : "none";
+  document.getElementById("newTeamName").focus();
+});
+document.getElementById("btnCancelCreate").addEventListener("click", () => {
+  document.getElementById("createTeamCard").style.display = "none";
+});
+document.getElementById("btnCreateTeam").addEventListener("click", async () => {
+  const name = document.getElementById("newTeamName").value.trim();
+  if (!name) { status("Team name is required.", "err"); return; }
+  try {
+    await api("/api/teams", "POST", { name, template: document.getElementById("newTeamTemplate").value,
+      team_brain_mode: document.getElementById("newTeamMode").value, goal: document.getElementById("newTeamGoal").value,
+      team_budget: { usd: parseFloat(document.getElementById("newTeamBudget").value || "0") || null },
+      seed_members: document.getElementById("newTeamSeed").checked });
+    document.getElementById("createTeamCard").style.display = "none";
+    status("Team created.", "ok"); await loadState();
+  } catch (e) { status("Create failed: " + e.message, "err"); }
+});
+// ---------- models ----------
+function renderModels() {
+  const mb = S.config.main_brain;
+  document.getElementById("mainBrainForm").innerHTML = `
+    <div class="row">
+      <div><label>Provider</label><select id="mbProvider">${S.providers.map(p => `<option value="${p.provider}" ${p.provider === mb.provider ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select></div>
+      <div><label>Model</label><input id="mbModel" list="mbModelList" value="${esc(mb.model)}"><datalist id="mbModelList">${((S.providers.find(p => p.provider === mb.provider) || {}).models || []).map(x => `<option value="${esc(x)}">`).join("")}</datalist></div>
+      <div><label>Endpoint / base_url</label><input id="mbEndpoint" value="${esc(mb.endpoint || "")}"></div>
+      <div><label>Auth ref</label><input id="mbAuth" value="${esc(mb.auth_ref)}"><p id="mbAuthWarn" class="field-err" style="display:none">Do not paste raw API keys here \u2014 use env:VAR_NAME.</p></div>
+      <div><label>Capabilities (comma-separated)</label><input id="mbCaps" value="${esc((mb.capabilities || []).join(", "))}"></div>
+      <div><label>Cost per M tokens (USD)</label><input id="mbCost" type="number" step="0.01" min="0" value="${mb.cost_per_mtok_usd || 0}"></div>
+      <div><label>Context limit (tokens)</label><input id="mbCtx" type="number" step="1000" min="0" value="${mb.context_limit || 128000}"></div>
+      <div><label>Max tokens per call</label><input id="mbMaxTok" type="number" step="256" min="0" value="${mb.max_tokens_per_call || 4096}"></div>
+      <div><label>Budget (USD)</label><input id="mbBudget" type="number" step="0.5" min="0" value="${mb.budget && mb.budget.usd != null ? mb.budget.usd : ""}"></div>
+    </div><div class="actions"><button id="btnMbSave" class="gold">Save Main Brain</button></div>`;
+  document.getElementById("mbProvider").addEventListener("change", ev => {
+    const preset = S.providers.find(p => p.provider === ev.target.value); if (!preset) return;
+    document.getElementById("mbEndpoint").value = preset.endpoint || "";
+    document.getElementById("mbAuth").value = preset.auth_ref || "none";
+    document.getElementById("mbModelList").innerHTML = (preset.models || []).map(x => `<option value="${esc(x)}">`).join("");
+    if (preset.models && preset.models.length) document.getElementById("mbModel").value = preset.models[0];
+  });
+  document.getElementById("mbAuth").addEventListener("input", ev => {
+    document.getElementById("mbAuthWarn").style.display = looksLikeRawKey(ev.target.value) ? "" : "none";
+  });
+  document.getElementById("btnMbSave").onclick = async () => {
+    const preset = S.providers.find(p => p.provider === document.getElementById("mbProvider").value);
+    if (looksLikeRawKey(document.getElementById("mbAuth").value.trim())) { status("Do not paste raw API keys here \u2014 use env:VAR_NAME.", "err"); return; }
+    try {
+      await api("/api/main-brain", "PUT", { provider: preset.provider, model: document.getElementById("mbModel").value,
+        endpoint: document.getElementById("mbEndpoint").value || preset.endpoint || null,
+        auth_ref: document.getElementById("mbAuth").value || preset.auth_ref, wire_format: preset.wire_format,
+        capabilities: document.getElementById("mbCaps").value.split(",").map(s => s.trim()).filter(Boolean),
+        cost_per_mtok_usd: parseFloat(document.getElementById("mbCost").value || "0") || 0,
+        context_limit: parseInt(document.getElementById("mbCtx").value || "128000", 10),
+        max_tokens_per_call: parseInt(document.getElementById("mbMaxTok").value || "4096", 10),
+        budget: { usd: parseFloat(document.getElementById("mbBudget").value || "0") || null } });
+      status("Main Brain saved.", "ok"); await loadState();
+    } catch (e) { status("Save failed: " + e.message, "err"); }
+  };
+  const rows = [];
+  for (const [team, t] of Object.entries(S.config.teams))
+    for (const m of t.members)
+      rows.push(`<tr><td data-label="Team">${esc(team)}</td><td data-label="Member">${esc(m.id)}</td><td data-label="Provider">${esc(m.provider)}</td>
+        <td data-label="Model" class="mono">${esc(m.model)}</td>
+        <td data-label="Endpoint" class="mono" title="${esc(m.endpoint || "")}">${esc((m.endpoint || "\u2014").slice(0, 40))}</td>
+        <td data-label="Auth ref" class="mono">${esc(m.auth_ref)}</td><td data-label="$/Mtok" class="num">$${m.cost_per_mtok_usd}</td>
+        <td data-label="Fallbacks">${(m.fallback || []).map(f => `<span class="pill">${esc(f.provider)}/${esc(f.model)}</span>`).join(" ") || "\u2014"}</td>
+        <td data-label=""><button class="ghost small" onclick="editMemberFromModels('${esc(team)}','${esc(m.id)}')">Edit</button></td></tr>`);
+  document.getElementById("modelsTable").innerHTML = rows.length
+    ? `<div class="table-wrap stacked"><table><thead><tr><th>Team</th><th>Member</th><th>Provider</th><th>Model</th><th>Endpoint</th><th>Auth ref</th><th class="num">$/Mtok</th><th>Fallbacks</th><th></th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`
+    : `<div class="empty">No members yet \u2014 add one in the Teams tab.</div>`;
+  document.getElementById("presetsTable").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Provider</th><th>Wire format</th><th>Endpoint</th><th>Models</th></tr></thead><tbody>
+    ${S.providers.map(p => `<tr><td>${esc(p.label)}</td><td class="mono">${p.wire_format}</td><td class="mono">${esc(p.endpoint || "\u2014")}</td><td>${esc((p.models || []).join(", "))}</td></tr>`).join("")}</tbody></table></div>`;
+  renderCustomProviders();
+}
+function renderCustomProviders() {
+  const list = (S.settings && S.settings.custom_providers) || [];
+  const box = document.getElementById("customProviders");
+  box.innerHTML = list.length ? list.map((c, i) => `<div class="conn-row"><span><b>${esc(c.provider)}</b> <span class="muted small">${esc(c.label || "")} \u00b7 ${esc(c.endpoint || "")} \u00b7 ${esc(c.wire_format || "")}</span></span><button class="danger small" onclick="removeCustomProvider(${i})">Remove</button></div>`).join("")
+    : `<span class="muted small">No custom providers yet.</span>`;
+}
+window.removeCustomProvider = async i => {
+  const name = ((S.settings.custom_providers || [])[i] || {}).provider;
+  if (!confirm("Remove custom provider " + name + "?")) return;
+  await saveSettingsSection(body => { body.custom_providers = (body.custom_providers || []).filter((_, j) => j !== i); }, "Custom provider removed.");
+};
+window.editMemberFromModels = (team, id) => {
+  const m = S.config.teams[team].members.find(x => x.id === id);
+  openMemberModal(team, m);
+};
+
+// ---------- files ----------
+function fmtSize(n) {
+  if (n == null) return "";
+  if (n < 1024) return n + " B";
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+  return (n / (1024 * 1024)).toFixed(1) + " MB";
+}
+function charterOwners(path) {
+  const owners = [];
+  for (const [team, t] of Object.entries(S.config.teams))
+    for (const m of t.members) if (m.charter_file === path) owners.push(team + "/" + m.id);
+  return owners;
+}
+function renderFiles() {
+  const box = document.getElementById("fileTree");
+  const fc = document.getElementById("fileCount");
+  if (fc) fc.textContent = S.files.length + " items";
+  box.innerHTML = S.files.map(f => {
+    if (f.type === "folder") return `<div class="file-row folder" data-folder="${esc(f.path)}"><span class="fname">${esc(f.path)}/</span><span class="muted small">folder</span><span style="flex:1"></span><button class="ghost small" data-delfolder="${esc(f.path)}" title="Delete empty folder">\u00d7</button></div>`;
+    const owners = charterOwners(f.path);
+    return `<div class="file-row ${editingFile === f.path ? "active" : ""}" data-file="${esc(f.path)}"><span class="fname">${esc(f.path)}</span>${owners.length ? `<span class="pill ochre">CHARTER</span>` : ""}<span class="muted small">${fmtSize(f.size)}</span></div>`;
+  }).join("") || `<span class="muted">No files yet.</span>`;
+  box.querySelectorAll("[data-file]").forEach(el => el.addEventListener("click", () => openFile(el.dataset.file)));
+  box.querySelectorAll("[data-folder]").forEach(el => el.addEventListener("click", ev => {
+    if (ev.target.dataset.delfolder) return;
+    document.getElementById("newFilePath").value = el.dataset.folder + "/";
+    document.getElementById("newFilePath").focus();
+  }));
+  box.querySelectorAll("[data-delfolder]").forEach(el => el.addEventListener("click", async ev => {
+    ev.stopPropagation();
+    const p = el.dataset.delfolder;
+    if (!confirm("Delete empty folder " + p + "/?")) return;
+    try { await api("/api/files?path=" + encodeURIComponent(p), "DELETE"); status("Folder deleted.", "ok"); await loadState(); }
+    catch (e) { status("Delete failed: " + e.message, "err"); }
+  }));
+}
+
+window.openFile = async path => {
+  if (editingFile && fileDirtyFlag && editingFile !== path) {
+    if (!confirm("Discard unsaved changes to " + editingFile + "?")) return;
+  }
+  try {
+    const data = await api("/api/files?path=" + encodeURIComponent(path));
+    editingFile = path; fileDirtyFlag = false;
+    document.getElementById("fileBinaryCard").style.display = "none";
+    document.getElementById("fileEditorHead").innerHTML = `Editing: <span class="mono">${esc(path)}</span><span id="fileDirtyStar"></span>`;
+    const ed = document.getElementById("fileEditor"); ed.style.display = "block"; ed.value = data.content;
+    document.getElementById("btnSaveFile").style.display = "";
+    document.getElementById("btnAttachCharter").style.display = "";
+    document.getElementById("btnAddToGraph").style.display = "";
+    document.getElementById("btnDeleteFile").style.display = "";
+    document.getElementById("fileDirty").textContent = "";
+    const owners = charterOwners(path);
+    const size = (S.files.find(f => f.path === path) || {}).size;
+    document.getElementById("fileMeta").textContent = [path, fmtSize(size), owners.length ? ("Charter of " + owners.join(", ")) : ""].filter(Boolean).join(" \u00b7 ");
+    renderFiles();
+  } catch (e) {
+    if (e.data && e.data.binary) {
+      editingFile = path; fileDirtyFlag = false;
+      document.getElementById("fileEditor").style.display = "none";
+      document.getElementById("btnSaveFile").style.display = "none";
+      document.getElementById("fileEditorHead").innerHTML = `File: <span class="mono">${esc(path)}</span>`;
+      const card = document.getElementById("fileBinaryCard");
+      card.style.display = "";
+      card.innerHTML = `<div class="card" style="margin:0"><h2>Binary file</h2><p class="muted small">${esc(path)} (${fmtSize(e.data.size)}) cannot be edited as text.</p><div class="actions"><button class="ghost" id="btnBinaryAttach">Attach as charter\u2026</button> <button class="ghost" id="btnBinaryGraph">Add to graph</button></div></div>`;
+      document.getElementById("btnAttachCharter").style.display = "";
+      document.getElementById("btnAddToGraph").style.display = "";
+      document.getElementById("btnDeleteFile").style.display = "";
+      document.getElementById("fileMeta").textContent = path + " \u00b7 " + fmtSize(e.data.size) + " \u00b7 binary";
+      document.getElementById("btnBinaryAttach").onclick = () => showAttachBox();
+      document.getElementById("btnBinaryGraph").onclick = () => addFileToGraph(path);
+      renderFiles();
+      return;
+    }
+    status("Open failed: " + e.message, "err");
+  }
+};
+
+function markFileDirty() {
+  if (!editingFile) return;
+  fileDirtyFlag = true;
+  document.getElementById("fileDirty").textContent = "Unsaved changes *";
+}
+document.getElementById("fileEditor").addEventListener("input", markFileDirty);
+async function saveCurrentFile() {
+  if (!editingFile) return;
+  try {
+    await api("/api/files", "PUT", { path: editingFile, content: document.getElementById("fileEditor").value });
+    fileDirtyFlag = false; document.getElementById("fileDirty").textContent = "";
+    status("File saved: " + editingFile, "ok"); await loadState();
+  } catch (e) { status("Save failed: " + e.message, "err"); }
+}
+document.getElementById("btnSaveFile").addEventListener("click", saveCurrentFile);
+document.addEventListener("keydown", ev => {
+  if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "s"
+      && document.getElementById("tab-files").classList.contains("active") && editingFile) {
+    ev.preventDefault(); saveCurrentFile();
+  }
+});
+document.getElementById("btnDeleteFile").addEventListener("click", async () => {
+  if (!editingFile || !confirm("Delete " + editingFile + "?")) return;
+  try { await api("/api/files?path=" + encodeURIComponent(editingFile), "DELETE");
+    editingFile = null; fileDirtyFlag = false;
+    document.getElementById("fileEditor").style.display = "none";
+    document.getElementById("btnSaveFile").style.display = "none"; document.getElementById("btnDeleteFile").style.display = "none";
+    document.getElementById("btnAttachCharter").style.display = "none"; document.getElementById("btnAddToGraph").style.display = "none";
+    document.getElementById("fileMeta").textContent = "";
+    document.getElementById("fileEditorHead").textContent = "Select a file to edit.";
+    document.getElementById("fileDirty").textContent = "";
+    status("File deleted.", "ok"); await loadState(); }
+  catch (e) { status("Delete failed: " + e.message, "err"); }
+});
+document.getElementById("btnNewFile").addEventListener("click", async () => {
+  const p = document.getElementById("newFilePath").value.trim(); if (!p) { status("Enter a path first.", "err"); return; }
+  try { await api("/api/files", "POST", { path: p, content: "# " + p + "\n" }); status("File created: " + p, "ok"); await loadState(); openFile(p); }
+  catch (e) { status("Create failed: " + e.message, "err"); }
+});
+document.getElementById("btnNewFolder").addEventListener("click", async () => {
+  const p = document.getElementById("newFilePath").value.trim(); if (!p) { status("Enter a path first.", "err"); return; }
+  try { await api("/api/files", "POST", { path: p, mkdir: true }); status("Folder created: " + p, "ok"); await loadState(); }
+  catch (e) { status("Create failed: " + e.message, "err"); }
+});
+
+// ---------- files: attach, add-to-graph, ZIP import ----------
+function showAttachBox() {
+  if (!editingFile) { status("Open a file first.", "err"); return; }
+  const sel = document.getElementById("attachTarget");
+  const opts = [];
+  for (const [team, t] of Object.entries(S.config.teams))
+    for (const m of t.members) opts.push(`<option value="${esc(team)}|${esc(m.id)}">${esc(team)} / ${esc(m.id)}${m.charter_file === editingFile ? " (already charter)" : ""}</option>`);
+  if (!opts.length) { status("No members yet \u2014 create a team first.", "err"); return; }
+  sel.innerHTML = opts.join("");
+  document.getElementById("attachBox").style.display = "";
+}
+async function addFileToGraph(path) {
+  const id = "file:" + path;
+  if (nodeById(id)) { status("That file is already on the graph.", "err"); return; }
+  const p = viewPointAt(120, 120);
+  graph().nodes.push({ id, type: "file", label: path, x: Math.max(0, Math.round(p.x)), y: Math.max(0, Math.round(p.y)), data: { path } });
+  selected = id; setDirty(true); renderGraph(); renderNodeForm();
+  switchTab("graph"); status("File added to the graph \u2014 press Save graph to persist.", "ok");
+}
+document.getElementById("btnAttachCharter").addEventListener("click", showAttachBox);
+document.getElementById("btnAddToGraph").addEventListener("click", () => { if (editingFile) addFileToGraph(editingFile); });
+document.getElementById("btnCancelAttach").addEventListener("click", () => { document.getElementById("attachBox").style.display = "none"; });
+document.getElementById("btnDoAttach").addEventListener("click", async () => {
+  const v = document.getElementById("attachTarget").value; if (!v || !editingFile) return;
+  const [team, id] = v.split("|");
+  try {
+    await api(`/api/teams/${encodeURIComponent(team)}/members/${encodeURIComponent(id)}`, "PUT", { charter_file: editingFile });
+    document.getElementById("attachBox").style.display = "none";
+    status(`Attached ${editingFile} as the charter of ${id}.`, "ok"); await loadState();
+  } catch (e) { status("Attach failed: " + e.message, "err"); }
+});
+document.getElementById("btnAddCustomProvider").addEventListener("click", async () => {
+  const id = document.getElementById("cpId").value.trim();
+  const endpoint = document.getElementById("cpEndpoint").value.trim();
+  if (!id || !/^[a-z0-9][a-z0-9_-]*$/.test(id)) { status("Provider ID must be a lowercase slug, e.g. my-llm.", "err"); return; }
+  if (!endpoint) { status("Base URL is required.", "err"); return; }
+  if (looksLikeRawKey(document.getElementById("cpAuth").value.trim())) { status("Do not paste raw API keys here \u2014 use env:VAR_NAME.", "err"); return; }
+  await saveSettingsSection(body => {
+    body.custom_providers = body.custom_providers || [];
+    if (body.custom_providers.some(c => c.provider === id)) throw new Error("Provider ID already exists.");
+    body.custom_providers.push({ provider: id, label: document.getElementById("cpLabel").value.trim() || id,
+      endpoint, wire_format: document.getElementById("cpWire").value,
+      auth_ref: document.getElementById("cpAuth").value.trim() || "none",
+      models: document.getElementById("cpModels").value.split(",").map(s => s.trim()).filter(Boolean),
+      capabilities: ["tool_calling", "structured_json"] });
+  }, "Custom provider added.");
+});
+document.getElementById("cpAuth").addEventListener("input", ev => {
+  document.getElementById("cpAuthWarn").style.display = looksLikeRawKey(ev.target.value) ? "" : "none";
+});
+let zipFile = null;
+function openZipModal() {
+  zipFile = null;
+  document.getElementById("zipFileInput").value = "";
+  document.getElementById("zipFileLine").style.display = "none";
+  document.getElementById("zipError").style.display = "none";
+  document.getElementById("zipResult").style.display = "none";
+  document.getElementById("zipBody").style.display = "";
+  document.getElementById("zipProgress").style.display = "none";
+  const btn = document.getElementById("btnDoZip");
+  btn.disabled = true; btn.textContent = "Upload & extract";
+  document.getElementById("zipModal").classList.add("open");
+}
+function closeZipModal() { document.getElementById("zipModal").classList.remove("open"); }
+function setZipFile(f) {
+  zipFile = f;
+  const line = document.getElementById("zipFileLine");
+  if (f) { line.style.display = ""; line.textContent = `${f.name} \u2014 ${fmtSize(f.size)}`; document.getElementById("btnDoZip").disabled = false; }
+  else { line.style.display = "none"; document.getElementById("btnDoZip").disabled = true; }
+}
+document.getElementById("btnImportZip").addEventListener("click", openZipModal);
+document.getElementById("btnCloseZip").addEventListener("click", closeZipModal);
+document.getElementById("btnCancelZip").addEventListener("click", closeZipModal);
+document.getElementById("zipModal").addEventListener("click", ev => { if (ev.target.id === "zipModal") closeZipModal(); });
+document.getElementById("zipDropzone").addEventListener("click", () => document.getElementById("zipFileInput").click());
+document.getElementById("zipFileInput").addEventListener("change", ev => setZipFile(ev.target.files[0] || null));
+["dragenter", "dragover"].forEach(evt => document.getElementById("zipDropzone").addEventListener(evt, ev => { ev.preventDefault(); ev.currentTarget.classList.add("dragover"); }));
+["dragleave", "drop"].forEach(evt => document.getElementById("zipDropzone").addEventListener(evt, ev => { ev.preventDefault(); ev.currentTarget.classList.remove("dragover"); }));
+document.getElementById("zipDropzone").addEventListener("drop", ev => {
+  const f = [...(ev.dataTransfer.files || [])].find(x => x.name.toLowerCase().endsWith(".zip"));
+  if (f) setZipFile(f); else status("Drop a .zip file.", "err");
+});
+const filesTab = document.getElementById("tab-files");
+["dragenter", "dragover"].forEach(evt => filesTab.addEventListener(evt, ev => { ev.preventDefault(); document.getElementById("zipDropOverlay").style.display = ""; }));
+filesTab.addEventListener("dragleave", ev => { if (ev.target === filesTab) document.getElementById("zipDropOverlay").style.display = "none"; });
+filesTab.addEventListener("drop", ev => {
+  ev.preventDefault(); document.getElementById("zipDropOverlay").style.display = "none";
+  const f = [...(ev.dataTransfer.files || [])].find(x => x.name.toLowerCase().endsWith(".zip"));
+  if (f) { openZipModal(); setZipFile(f); }
+});
+function humanZipError(err) {
+  const code = err.data && err.data.code;
+  const map = {
+    path_traversal: "The zip contains an unsafe path (../ or absolute). Nothing was extracted.",
+    credential_path: "The zip contains a credential path that is blocked by policy. Nothing was extracted.",
+    symlink_entry: "The zip contains a symlink entry. Nothing was extracted.",
+    not_a_zip: "That file is not a valid zip archive.",
+    zip_too_large: "The zip is over the 10 MB upload limit.",
+    uncompressed_too_large: "The zip extracts to over 25 MB.",
+    too_many_files: "The zip contains over 200 files.",
+    zip_bomb_ratio: "The zip looks like a zip bomb (compression ratio over 100:1).",
+    encrypted_entry: "The zip contains an encrypted entry, which cannot be extracted.",
+  };
+  return (code && map[code]) || err.message || "Import failed.";
+}
+document.getElementById("btnDoZip").addEventListener("click", async () => {
+  if (!zipFile) return;
+  const dest = document.getElementById("zipDest").value.trim();
+  const overwrite = document.getElementById("zipOverwrite").value;
+  const btn = document.getElementById("btnDoZip");
+  btn.disabled = true; btn.textContent = "Uploading\u2026";
+  document.getElementById("zipError").style.display = "none";
+  const prog = document.getElementById("zipProgress");
+  prog.style.display = ""; prog.textContent = "Uploading " + zipFile.name + "\u2026";
+  try {
+    const res = await fetch(`/api/files/import-zip?dest=${encodeURIComponent(dest)}&overwrite=${overwrite}`, {
+      method: "POST", headers: { "Content-Type": "application/zip", "X-Airlangga-Token": token() }, body: zipFile });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { const err = new Error(data.error || ("HTTP " + res.status)); err.data = data; throw err; }
+    prog.style.display = "none";
+    document.getElementById("zipBody").style.display = "none";
+    const result = document.getElementById("zipResult");
+    result.style.display = "";
+    const files = data.extracted || [];
+    result.innerHTML = `<h3>Imported ${files.length} file${files.length === 1 ? "" : "s"}</h3><ul class="mono small">${files.map(f => `<li>${esc(f.path)} (${fmtSize(f.size)})</li>`).join("")}</ul>${(data.skipped || []).length ? `<p class="muted small">Skipped (already existed): ${esc(data.skipped.join(", "))}</p>` : ""}<div class="actions"><button class="gold" id="btnZipDone">Done</button></div>`;
+    document.getElementById("btnZipDone").onclick = async () => { closeZipModal(); await loadState(); };
+    status(`Imported ${files.length} file${files.length === 1 ? "" : "s"} from ${zipFile.name}.`, "ok");
+  } catch (e) {
+    prog.style.display = "none";
+    const errEl = document.getElementById("zipError");
+    errEl.style.display = ""; errEl.textContent = humanZipError(e);
+    btn.disabled = false; btn.textContent = "Upload & extract";
+  }
+});
+
+// ---------- runs ----------
+function renderRunTeamSelect() {
+  document.getElementById("runTeam").innerHTML = Object.keys(S.config.teams).map(t => `<option>${esc(t)}</option>`).join("");
+}
+function runCost(r) { return Object.values(r.cost_by_actor || {}).reduce((a, c) => a + (c.usd || 0), 0); }
+function contractPill(r) {
+  const c = r.contracts || {};
+  const n = Object.keys(c).length;
+  if (!n) return "—";
+  return `<span class="pill ok">${n} contract${n === 1 ? "" : "s"}</span>`;
+}
+async function renderRuns() {
+  try {
+    const data = await api("/api/runs");
+    const box = document.getElementById("runsTable");
+    if (!data.runs.length) { box.innerHTML = `<div class="empty">No runs yet — launch a team above.</div>`; return; }
+    box.innerHTML = `<div class="table-wrap stacked"><table><thead><tr><th>Run</th><th>Status</th><th>Goal</th><th class="num">Events</th><th class="num">Cost</th><th>Contracts</th></tr></thead><tbody>
+      ${data.runs.map(r => {
+        const running = r.run_id === activeRunId && r.status === "running";
+        return `<tr class="clickable ${r.status === "done" ? "" : ""}" data-run="${esc(r.run_id)}">
+        <td data-label="Run" class="mono">${esc(r.run_id)}</td>
+        <td data-label="Status"><span class="pill ${r.status === "done" ? "ok" : r.status === "failed" ? "fail" : "run"}">${running ? '<span class="dot"></span>' : ""}${esc(r.status)}</span></td>
+        <td data-label="Goal">${esc((r.goal || "").slice(0, 60))}</td>
+        <td data-label="Events" class="num">${r.events}</td>
+        <td data-label="Cost" class="num">${fmtUsd(runCost(r))}</td>
+        <td data-label="Contracts">${contractPill(r)}</td></tr>`;
+      }).join("")}</tbody></table></div>`;
+    box.querySelectorAll("[data-run]").forEach(el => el.addEventListener("click", () => showRun(el.dataset.run)));
+  } catch (e) { status("Runs failed: " + e.message, "err"); }
+}
+function humanizeRunError(msg) {
+  const m = String(msg || "");
+  if (/NoCapableModel/i.test(m)) return "No model in this team can handle the task \u2014 check each member's capabilities and fallback chain.";
+  if (/api key|auth|401|unauthorized|invalid key/i.test(m)) return "A provider API key is missing or was rejected. Check the auth ref (env:VAR_NAME) for the member's model.";
+  if (/budget/i.test(m)) return "The run hit its budget cap. Raise the team or run budget and try again.";
+  if (/context|too long|context_length|tokens exceed/i.test(m)) return "The conversation grew past the model's context limit. Shorten the goal or raise the context limit.";
+  if (/connect|fetch failed|ECONNREFUSED|timeout|network/i.test(m)) return "Could not reach the model provider. Check the endpoint URL and network, then retry.";
+  if (/rate limit|429/i.test(m)) return "The provider rate-limited the run. Wait a moment and retry.";
+  return m.length > 300 ? m.slice(0, 300) + "\u2026" : m;
+}
+const EVENT_HUMAN = {
+  run_started: "Run started", goal_assigned: "Goal assigned", plan_created: "Plan created",
+  member_working: "Member started work", member_done: "Member finished",
+  member_failed: "Member failed", contract_done: "Contract completed",
+  contract_failed: "Contract failed", dissent: "Dissent raised",
+  budget_exceeded: "Budget exceeded", run_done: "Run finished", run_failed: "Run failed",
+};
+function eventSummary(e) {
+  const p = e.payload || {};
+  if (p.goal) return "Goal: " + p.goal;
+  if (p.member_id && p.verdict_self) return `${p.member_id} \u2014 verdict: ${p.verdict_self}`;
+  if (p.member_id && p.claims !== undefined) return `${p.member_id} \u2014 ${p.claims} claim(s)`;
+  if (p.reason) return String(p.reason);
+  if (p.dissent) return "Dissent: " + (typeof p.dissent === "string" ? p.dissent : JSON.stringify(p.dissent).slice(0, 120));
+  const label = EVENT_HUMAN[e.type] || human(e.type);
+  const who = p.member_id ? p.member_id + " \u2014 " : "";
+  return who + label;
+}
+
+window.showRun = async (runId, opts) => {
+  opts = opts || {};
+  try {
+    const d = await api("/api/runs/" + encodeURIComponent(runId));
+    const total = Object.values(d.cost_by_actor || {}).reduce((a, c) => a + (c.usd || 0), 0);
+    const dissents = d.dissents || [];
+    const contractList = Object.entries(d.contracts || {}).map(([id, c]) => ({ id, ...(c || {}) }));
+    document.getElementById("runDetailCard").style.display = "";
+    const tabs = [["timeline", `Timeline (${d.events.length})`], ["cost", "Cost breakdown"],
+                  ["dissents", `Dissents (${dissents.length})`], ["contracts", `Contracts (${contractList.length})`], ["trace", "Raw trace"]];
+    let html = `<div class="kpis"><span>Run <b class="mono">${esc(d.run_id)}</b></span>
+      <span><span class="pill ${d.status === "done" ? "ok" : d.status === "failed" ? "fail" : "run"}">${esc(d.status)}</span></span>
+      <span>Total <b>${fmtUsd(total)}</b></span>
+      <span><b>${d.events.length}</b> events</span>
+      <span><b style="${dissents.length ? "color:var(--accent2)" : ""}">${dissents.length}</b> dissents</span>
+      <span style="flex:1"></span><button class="ghost small" id="btnCloseRun">Close \u00d7</button></div>`;
+    if (d.status === "failed" && d.error) {
+      html += `<div style="border:1px solid var(--danger); border-left:3px solid var(--danger); background:rgba(229,91,80,.08); border-radius:4px; padding:10px 12px; margin:10px 0;"><b>Run failed.</b> ${esc(humanizeRunError(d.error))}</div>`;
+    }
+    html += `<div class="subtabs">${tabs.map(([k, label]) => `<button data-rtab="${k}" class="${runDetailTab === k ? "active" : ""}">${label}</button>`).join("")}</div>
+      <div id="runDetailBody"></div>`;
+    document.getElementById("runDetail").innerHTML = html;
+    document.getElementById("btnCloseRun").onclick = () => { document.getElementById("runDetailCard").style.display = "none"; };
+    document.querySelectorAll("[data-rtab]").forEach(b => b.addEventListener("click", () => { runDetailTab = b.dataset.rtab; showRun(runId); }));
+    const body = document.getElementById("runDetailBody");
+    if (runDetailTab === "timeline") {
+      body.innerHTML = d.events.length ? `<div class="table-wrap"><table><thead><tr><th class="num">#</th><th>Time (UTC)</th><th>Actor</th><th>Type</th><th>Summary</th></tr></thead><tbody>
+        ${d.events.map(e => `<tr><td class="num">${e.seq}</td><td class="mono">${hhmmss(e.ts)}</td><td><span class="pill">${esc(e.actor)}</span></td>
+        <td><span class="pill">${esc(human(e.type))}</span></td>
+        <td>${esc(eventSummary(e))} <details style="display:inline"><summary style="display:inline;cursor:pointer;color:var(--info)">raw</summary><pre class="trace" style="max-height:160px">${esc(JSON.stringify(e.payload, null, 2))}</pre></details></td></tr>`).join("")}</tbody></table></div>`
+        : `<div class="empty">No events recorded for this run yet.</div>`;
+    } else if (runDetailTab === "cost") {
+      const rows = Object.entries(d.cost_by_actor || {});
+      body.innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Actor</th><th class="num">Tokens</th><th class="num">Tool calls</th><th class="num">USD</th></tr></thead><tbody>
+        ${rows.map(([a, c]) => `<tr><td class="mono">${esc(a)}</td><td class="num">${Number(c.tokens || 0).toLocaleString("en-US")}</td><td class="num">${Number(c.tool_calls || 0).toLocaleString("en-US")}</td><td class="num">${fmtUsd(c.usd)}</td></tr>`).join("")}
+        <tr><td><b>Total</b></td><td></td><td></td><td class="num"><b>${fmtUsd(total)}</b></td></tr></tbody></table></div>`
+        : `<div class="empty">No cost recorded for this run.</div>`;
+    } else if (runDetailTab === "dissents") {
+      body.innerHTML = dissents.length ? dissents.map(x => `<details><summary>${esc(typeof x === "string" ? x.slice(0, 120) : JSON.stringify(x).slice(0, 120))}</summary><pre class="trace">${esc(JSON.stringify(x, null, 2))}</pre></details>`).join("")
+        : `<div class="empty">No dissents \u2014 the team agreed.</div>`;
+    } else if (runDetailTab === "contracts") {
+      body.innerHTML = contractList.length ? contractList.map(c => `<div class="card" style="margin:8px 0"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(c.id)}</b><span class="pill ${c.status === "done" ? "ok" : c.status === "failed" ? "fail" : ""}">${esc(c.status || "open")}</span>${c.member_id ? `<span class="pill">${esc(c.member_id)}</span>` : ""}<span style="flex:1"></span><span class="muted small">${c.budget && c.budget.usd != null ? "$" + Number(c.budget.usd).toFixed(2) : ""}</span></div><p class="muted small" style="margin:6px 0 0">${esc(c.goal || "")}</p></div>`).join("")
+        : `<div class="empty">No contracts yet for this run.</div>`;
+    } else {
+      body.innerHTML = `<div class="actions" style="margin:0 0 8px"><button class="ghost small" id="btnCopyTrace">Copy trace</button></div>
+        <pre class="trace">${esc(d.trace_text || "")}</pre>`;
+      document.getElementById("btnCopyTrace").onclick = async () => {
+        const text = d.trace_text || "";
+        try { await navigator.clipboard.writeText(text); status("Trace copied.", "ok"); }
+        catch (e) {
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+            document.body.appendChild(ta); ta.select();
+            document.execCommand("copy"); ta.remove(); status("Trace copied.", "ok");
+          } catch (e2) { status("Copy failed: " + e2.message, "err"); }
+        }
+      };
+    }
+    if (opts.scroll !== false) document.getElementById("runDetailCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (e) { status("Trace failed: " + e.message, "err"); }
+};
+
+document.getElementById("btnRun").addEventListener("click", async () => {
+  const team = document.getElementById("runTeam").value;
+  const goal = document.getElementById("runGoal").value.trim();
+  if (!goal) { status("Enter a goal first.", "err"); return; }
+  if (runPoll) { clearInterval(runPoll); runPoll = null; }
+  try {
+    const res = await api("/api/runs", "POST", { team, goal, mock: document.getElementById("runMock").value === "true" });
+    activeRunId = res.run_id;
+    status("Run started: " + res.run_id, "ok");
+    runPoll = setInterval(async () => {
+      try {
+        await renderRuns();
+        const d = await api("/api/runs/" + encodeURIComponent(res.run_id));
+        if (document.getElementById("runDetailCard").style.display !== "none" && activeRunId === res.run_id) {
+          await showRun(res.run_id, { scroll: false });
+        }
+        if (d && (d.status === "done" || d.status === "failed")) {
+          clearInterval(runPoll); runPoll = null; activeRunId = null; showRun(res.run_id);
+        }
+      } catch (e) { clearInterval(runPoll); runPoll = null; activeRunId = null; status("Run polling failed: " + e.message, "err"); }
+    }, 1500);
+  } catch (e) { status("Run failed: " + e.message, "err"); }
+});
+
+
+// ---------- settings ----------
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (document.activeElement !== el) el.value = v;
+}
+function renderTelegramStatus() {
+  const s = S.settings;
+  const pill = document.getElementById("tgPill");
+  pill.textContent = s.telegram.bot_token_set ? "Configured" : "Not set";
+  pill.className = "pill " + (s.telegram.bot_token_set ? "ok" : "");
+  document.getElementById("tgStatus").textContent = s.telegram.bot_token_set ? "Bot token: set." : "Bot token: not set (set TELEGRAM_BOT_TOKEN or paste one below).";
+}
+function renderCronList() {
+  const s = S.settings;
+  const teams = Object.keys(S.config.teams);
+  document.getElementById("cronTeam").innerHTML = teams.map(t => `<option>${esc(t)}</option>`).join("");
+  document.getElementById("cronList").innerHTML = (s.cron || []).length ? `<div class="table-wrap"><table><thead><tr><th>Job</th><th>Team</th><th>Every</th><th>Goal</th><th>Status</th><th></th></tr></thead><tbody>
+    ${(s.cron || []).map((j, i) => `<tr><td><b>${esc(j.name)}</b></td><td>${esc(j.team)}</td><td class="mono">${j.interval_min} min</td>
+    <td>${esc(j.goal)}</td><td><span class="pill ${j.enabled === false ? "" : "ok"}">${j.enabled === false ? "disabled" : "enabled"}</span></td>
+    <td><button class="ghost small" onclick="toggleCron(${i})">${j.enabled === false ? "Enable" : "Disable"}</button>
+    <button class="danger small" onclick="deleteCron(${i})">Delete</button></td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="empty">No scheduled jobs yet.</div>`;
+}
+function renderSkillsList() {
+  api("/api/skills").then(d => {
+    cachedSkills = d.skills || [];
+    document.getElementById("skillsList").innerHTML = d.skills.map(s2 => `<div class="skill-row" data-skill="${esc(s2.name)}" style="cursor:pointer" title="Click to edit"><span class="pill">skill</span> ${esc(s2.name)} <span class="muted small">${esc(s2.path)}</span></div>`).join("") || `<span class="muted">No skills yet.</span>`;
+    document.querySelectorAll(".skill-row").forEach(el => el.addEventListener("click", () => loadSkillForEdit(el.dataset.skill)));
+  }).catch(() => {});
+}
+window.loadSkillForEdit = async name => {
+  try {
+    const d = await api("/api/skills?name=" + encodeURIComponent(name));
+    document.getElementById("newSkillText").value = d.content;
+    document.getElementById("skillEditorDrawer").open = true;
+    document.getElementById("newSkillText").focus();
+    status("Editing skill: " + name, "ok");
+  } catch (e) { status("Load failed: " + e.message, "err"); }
+};
+function renderSettings() {
+  const s = S.settings;
+  setVal("tgAllow", (s.telegram.allowlist || []).join(", "));
+  renderTelegramStatus();
+  setVal("approvalDefault", s.approval_default || "smart");
+  document.getElementById("approvalOffWarn").style.display = (s.approval_default === "off") ? "" : "none";
+  const note = document.getElementById("uiTokenNote");
+  note.textContent = "The token lives in the server's .ui-token file (0600) and is never shown back. Changing it here takes effect immediately.";
+  note.style.display = "";
+  setVal("budgetRun", s.budgets ? s.budgets.run_usd : "");
+  setVal("budgetTeam", s.budgets ? s.budgets.team_usd : "");
+  renderCronList();
+  renderSkillsList();
+}
+
+// Each Settings section saves only its own fields — but always PUTs the
+// full settings body (merged from the last loaded state) so the other
+// sections are never wiped by a partial write.
+async function saveSettingsSection(mut, okMsg, after) {
+  const body = JSON.parse(JSON.stringify(S.settings));
+  try { mut(body); } catch (e) { status(e.message, "err"); return; }
+  try {
+    const r = await api("/api/settings", "PUT", body);
+    S.settings = r.settings || body;
+    status(okMsg, "ok");
+    if (after) after();
+  } catch (e) { status("Save failed: " + e.message, "err"); }
+}
+
+document.getElementById("btnSaveTelegram").addEventListener("click", async () => {
+  const tok = document.getElementById("tgToken").value.trim();
+  const raw = document.getElementById("tgAllow").value;
+  const parts = raw.split(",").map(x => x.trim()).filter(Boolean);
+  const bad = parts.filter(x => !/^\d+$/.test(x));
+  const errEl = document.getElementById("tgAllowErr");
+  if (bad.length) { errEl.style.display = ""; errEl.textContent = "Allowlist must be comma-separated Telegram user IDs (numbers only): " + bad.join(", "); return; }
+  errEl.style.display = "none";
+  await saveSettingsSection(body => {
+    body.telegram = { allowlist: parts.map(x => parseInt(x, 10)) };
+    if (tok) body.telegram.bot_token = tok;
+  }, "Telegram settings saved.", () => {
+    document.getElementById("tgUnsaved").style.display = "none";
+    renderTelegramStatus();
+  });
+  document.getElementById("tgToken").value = "";
+});
+
+document.getElementById("btnSaveBudgets").addEventListener("click", async () => {
+  await saveSettingsSection(body => {
+    body.approval_default = document.getElementById("approvalDefault").value;
+    body.budgets = { run_usd: parseFloat(document.getElementById("budgetRun").value || "0"),
+                     team_usd: parseFloat(document.getElementById("budgetTeam").value || "0") };
+  }, "Approvals & budgets saved.", () => {
+    document.getElementById("budgetsUnsaved").style.display = "none";
+  });
+});
+
+window.toggleCron = async i => {
+  await saveSettingsSection(body => { body.cron[i].enabled = body.cron[i].enabled === false; }, "Job updated.", renderCronList);
+};
+
+window.deleteCron = async i => {
+  const name = (S.settings.cron || [])[i].name;
+  if (!confirm("Delete cron job " + name + "?")) return;
+  await saveSettingsSection(body => { body.cron.splice(i, 1); }, "Job deleted.", renderCronList);
+};
+
+document.getElementById("btnAddCron").addEventListener("click", async () => {
+  await saveSettingsSection(body => {
+    body.cron = body.cron || [];
+    body.cron.push({ name: document.getElementById("cronName").value.trim() || ("job-" + (body.cron.length + 1)),
+      team: document.getElementById("cronTeam").value, goal: document.getElementById("cronGoal").value.trim(),
+      interval_min: parseInt(document.getElementById("cronInterval").value || "60"), enabled: true });
+  }, "Cron job added.", renderCronList);
+});
+
+document.getElementById("btnCronTick").addEventListener("click", async () => {
+  try { const r = await api("/api/cron/tick", "POST", {}); status("Cron tick started runs: " + (r.started_runs || []).join(", "), "ok"); }
+  catch (e) { status("Tick failed: " + e.message, "err"); }
+});
+document.getElementById("btnChangeUIToken").addEventListener("click", async () => {
+  const cur = document.getElementById("uiCurToken").value;
+  const nw = document.getElementById("uiNewToken").value;
+  const nw2 = document.getElementById("uiNewToken2").value;
+  const el = document.getElementById("uiTokenStatus");
+  if (!cur) { el.textContent = "Enter the current token first."; return; }
+  if (nw.length < 8) { el.textContent = "New token must be at least 8 characters."; return; }
+  if (nw !== nw2) { el.textContent = "New tokens do not match."; return; }
+  try {
+    await api("/api/settings/ui-token", "POST", { current_token: cur, new_token: nw });
+    document.getElementById("uiCurToken").value = "";
+    document.getElementById("uiNewToken").value = "";
+    document.getElementById("uiNewToken2").value = "";
+    sessionStorage.removeItem("airlangga_token");
+    el.textContent = "UI password changed. Please log in again with the new token.";
+    status("UI password changed — log in again with the new token.", "ok");
+    showLogin("UI password changed. Please log in again with the new token.");
+  } catch (e) { el.textContent = "Change failed: " + e.message; }
+});
+document.getElementById("btnAddSkill").addEventListener("click", async () => {
+  const text = document.getElementById("newSkillText").value;
+  const m = text.match(/^name:\s*(\S+)/m);
+  if (!m) { status("Skill YAML needs a name: field.", "err"); return; }
+  try { await api("/api/skills", "PUT", { name: m[1] + ".yaml", content: text }); status("Skill saved.", "ok"); renderSkillsList(); }
+  catch (e) { status("Save failed: " + e.message, "err"); }
+});
+
+// Settings dirty pills + live validation (attached once).
+document.getElementById("tgAllow").addEventListener("input", ev => {
+  document.getElementById("tgUnsaved").style.display = "";
+  const bad = ev.target.value.split(",").map(x => x.trim()).filter(Boolean).filter(x => !/^\d+$/.test(x));
+  const errEl = document.getElementById("tgAllowErr");
+  if (bad.length) { errEl.style.display = ""; errEl.textContent = "Allowlist must be comma-separated Telegram user IDs (numbers only)."; }
+  else errEl.style.display = "none";
+});
+document.getElementById("tgToken").addEventListener("input", () => { document.getElementById("tgUnsaved").style.display = ""; });
+["approvalDefault", "budgetRun", "budgetTeam"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => { document.getElementById("budgetsUnsaved").style.display = ""; });
+});
+document.getElementById("approvalDefault").addEventListener("change", ev => {
+  document.getElementById("approvalOffWarn").style.display = ev.target.value === "off" ? "" : "none";
+});
+
+
+// ---------- login / boot ----------
+// The server always serves this page (HTTP 200), even with no token,
+// so the login form is what a browser sees first. A token passed as
+// ?token=... is stored for this tab only, then the URL is cleaned so
+// the token never lingers in the address bar or history.
+async function boot() {
+  const q = new URLSearchParams(location.search);
+  const qt = q.get("token");
+  if (qt) {
+    sessionStorage.setItem("airlangga_token", qt);
+    history.replaceState({}, "", location.pathname);
+  }
+  try {
+    await loadState();
+    hideLogin();
+  } catch (e) {
+    if (e.unauthorized) showLogin(qt || token() ? "Wrong token \u2014 try again." : "");
+    else showLogin("Cannot reach server \u2014 check the UI is running, then reload this page.");
+  }
+}
+document.getElementById("loginForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const btn = document.getElementById("btnLogin");
+  const v = document.getElementById("loginToken").value.trim();
+  if (!v) { document.getElementById("loginError").textContent = "Enter your UI token."; return; }
+  btn.disabled = true; btn.textContent = "Signing in\u2026";
+  sessionStorage.setItem("airlangga_token", v);
+  try {
+    await loadState();
+    hideLogin();
+  } catch (e) {
+    sessionStorage.removeItem("airlangga_token");
+    document.getElementById("loginError").textContent =
+      e.unauthorized ? "Wrong token \u2014 try again." : ("Login failed: " + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Enter Studio";
+  }
+});
+boot();
+</script>
+</body>
+</html>

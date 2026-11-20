@@ -1,0 +1,10 @@
+# Team template: content (version 1)
+# Roles: drafter (writes), editor (tightens, different model), fact_checker (verifies claims).
+template: content
+version: 1
+description: "Draft, edit, and fact-check a piece of content."
+roles:
+  - drafter
+  - editor
+  - fact_checker
+debate: { enabled: true, max_rounds: 2, critic_must_differ: true }

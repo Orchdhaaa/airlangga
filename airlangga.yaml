@@ -1,0 +1,101 @@
+# airlangga.yaml — example configuration (no real keys in this file)
+# auth_ref = env:VAR_NAME or none — never a literal secret.
+version: 1
+defaults:
+  currency: USD
+  timezone: UTC
+
+main_brain:
+  provider: anthropic
+  model: claude-opus-4-6
+  auth_ref: env:ANTHROPIC_API_KEY
+  wire_format: anthropic_messages
+  capabilities: [tool_calling, structured_json, long_context]
+  cost_per_mtok_usd: 15.00
+  budget: { tokens: 200000, usd: 20.00, wall_clock_min: 120, tool_calls: 200 }
+  tools: [plan, assign, reallocate_budget, accept, reject, ask_human, finalize]
+
+teams:
+  research-01:
+    template: research
+    goal: "Produce a sourced brief on the given topic with claims, evidence refs, and open questions."
+    team_budget: { tokens: 1500000, usd: 15.00, wall_clock_min: 90, tool_calls: 600 }
+    team_brain_mode: lead_member
+    lead_member: researcher
+    members:
+      - id: researcher
+        role: researcher
+        provider: anthropic
+        model: claude-sonnet-4-5
+        auth_ref: env:ANTHROPIC_API_KEY
+        wire_format: anthropic_messages
+        capabilities: [tool_calling, structured_json, long_context]
+        context_limit: 200000
+        cost_per_mtok_usd: 3.00
+        toolsets: [web, file_read]
+        skills: [research]
+        budget: { tokens: 600000, usd: 6.00, wall_clock_min: 45, tool_calls: 200 }
+        approval: smart
+        fallback:
+          - provider: openai
+            model: gpt-5-mini
+            auth_ref: env:OPENAI_API_KEY
+            wire_format: openai_chat
+            capabilities: [tool_calling, structured_json]
+          - provider: ollama
+            model: qwen3:8b
+            endpoint: http://localhost:11434/v1
+            auth_ref: none
+            wire_format: openai_chat
+            capabilities: [tool_calling, structured_json]
+        routing_policy:
+          require: [tool_calling, structured_json]
+          prefer: cheapest_above_quality_floor
+
+      - id: fact_checker
+        role: critic
+        provider: custom
+        model: deepseek-chat
+        endpoint: https://api.deepseek.com/v1
+        auth_ref: env:DEEPSEEK_API_KEY
+        wire_format: openai_chat
+        capabilities: [tool_calling, structured_json]
+        context_limit: 64000
+        cost_per_mtok_usd: 0.28
+        toolsets: [web, file_read]
+        skills: []
+        budget: { tokens: 400000, usd: 3.00, wall_clock_min: 30, tool_calls: 150 }
+        approval: smart
+        fallback:
+          - provider: ollama
+            model: qwen3:8b
+            endpoint: http://localhost:11434/v1
+            auth_ref: none
+            wire_format: openai_chat
+            capabilities: [tool_calling, structured_json]
+        routing_policy:
+          require: [tool_calling, structured_json]
+          prefer: cheapest_above_quality_floor
+
+      - id: writer
+        role: writer
+        provider: ollama
+        model: llama3.1:8b
+        endpoint: http://localhost:11434/v1
+        auth_ref: none
+        wire_format: openai_chat
+        capabilities: [tool_calling, structured_json]
+        context_limit: 128000
+        cost_per_mtok_usd: 0.00
+        toolsets: [file_write]
+        skills: []
+        budget: { tokens: 500000, usd: 0.00, wall_clock_min: 30, tool_calls: 100 }
+        approval: smart
+        fallback: []
+        routing_policy:
+          require: [tool_calling, structured_json]
+          prefer: local_first
+
+    policy:
+      network_scope: [allow: web_search, api.deepseek.com, api.anthropic.com]
+      approval_required: [spend_above_usd_5, external_post, file_write_outside_workspace]

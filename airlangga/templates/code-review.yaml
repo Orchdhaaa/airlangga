@@ -1,0 +1,11 @@
+# Team template: code+review (version 1)
+# Roles: coder (implements), reviewer (checks, different model), tester (runs verifiers).
+template: code-review
+version: 1
+description: "Implement a change, review it, and verify it with executable checks."
+roles:
+  - coder
+  - reviewer
+  - tester
+debate: { enabled: true, max_rounds: 2, critic_must_differ: true }
+acceptance: { kind: shell, description: "Tests must exit 0." }

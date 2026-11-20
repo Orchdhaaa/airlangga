@@ -1,0 +1,10 @@
+# Team template: research (version 1)
+# Roles: researcher (drafts), critic (checks, different model), writer (assembles).
+template: research
+version: 1
+description: "Produce a sourced brief: claims, evidence refs, open questions."
+roles:
+  - researcher
+  - critic
+  - writer
+debate: { enabled: true, max_rounds: 2, critic_must_differ: true }
